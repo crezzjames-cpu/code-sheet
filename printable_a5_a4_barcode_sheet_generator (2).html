@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A4 & A5 Barcode Voucher Sheet Generator</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lavender: {
+                            50: '#f7f5ff',
+                            100: '#efeafd',
+                            200: '#ddd4fb',
+                            300: '#c2b0f7',
+                            400: '#a384f1',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <!-- JsBarcode CDN for linear barcodes -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+    <!-- QRCodeJS CDN for 2D QR Codes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f0ff;
+            color: #1e1b4b;
+        }
+
+        /* Precise Printable Dimensions for A4 Page */
+        .a4-page {
+            width: 210mm;
+            height: 297mm;
+            box-sizing: border-box;
+            background: #ffffff;
+            position: relative;
+            margin: 0 auto;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* A5 Section Height for Split Mode */
+        .a5-section {
+            height: 148.5mm;
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Voucher Box Styling matching user screenshot layout */
+        .voucher-box {
+            border-style: solid;
+            transition: all 0.15s ease;
+            box-sizing: border-box;
+            word-break: break-word;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Print Specific Styles for High Quality Physical Output */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            html, body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 210mm;
+                height: 297mm;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .a4-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+            .print-cut-line {
+                border-top-style: dashed !important;
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1edfe;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c2b0f7;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a384f1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Application Header (No Print) -->
+    <header class="no-print bg-white border-b border-lavender-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-lavender-600 text-white flex items-center justify-center shadow-md shadow-lavender-200">
+                    <i data-lucide="barcode" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-gray-900 leading-tight">Barcode Voucher Sheet Creator</h1>
+                    <p class="text-xs text-lavender-600 font-medium">Split A5 or Full A4 Printable Sheets</p>
+                </div>
+            </div>
+
+            <!-- Header Quick Actions -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="openBulkImportModal()" class="px-3 py-1.5 text-xs sm:text-sm font-semibold text-lavender-700 bg-lavender-100 hover:bg-lavender-200 rounded-lg transition-colors flex items-center gap-1.5">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Bulk Batch Import</span>
+                    <span class="sm:hidden">Import</span>
+                </button>
+                <button onclick="loadSampleData()" class="px-3 py-1.5 text-xs sm:text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1.5">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-lavender-600"></i>
+                    <span class="hidden sm:inline">Load Sample</span>
+                </button>
+                <button onclick="window.print()" class="px-4 py-1.5 text-xs sm:text-sm font-semibold text-white bg-lavender-600 hover:bg-lavender-700 rounded-lg shadow flex items-center gap-2 transition-all transform active:scale-95">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>Print Sheet</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Split App Container -->
+    <main class="flex-1 max-w-[1700px] w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- LEFT CONTROL PANEL (No Print) -->
+        <section class="no-print lg:col-span-5 xl:col-span-4 bg-white rounded-2xl border border-lavender-200 shadow-xl overflow-hidden flex flex-col max-h-[calc(100vh-6rem)] sticky top-20">
+            
+            <!-- Panel Navigation Tabs -->
+            <div class="flex border-b border-lavender-200 bg-lavender-50/60 p-1.5 gap-1">
+                <button id="tab-btn-content" onclick="switchTab('content')" class="flex-1 py-2 px-2 text-xs sm:text-sm font-semibold rounded-lg flex items-center justify-center gap-1.5 bg-white text-lavender-700 shadow-sm transition-all">
+                    <i data-lucide="ticket" class="w-4 h-4"></i>
+                    <span>Vouchers</span>
+                </button>
+                <button id="tab-btn-page" onclick="switchTab('page')" class="flex-1 py-2 px-2 text-xs sm:text-sm font-semibold rounded-lg flex items-center justify-center gap-1.5 text-gray-600 hover:bg-white/60 transition-all">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    <span>Page & Grid</span>
+                </button>
+                <button id="tab-btn-style" onclick="switchTab('style')" class="flex-1 py-2 px-2 text-xs sm:text-sm font-semibold rounded-lg flex items-center justify-center gap-1.5 text-gray-600 hover:bg-white/60 transition-all">
+                    <i data-lucide="palette" class="w-4 h-4"></i>
+                    <span>Logo & Style</span>
+                </button>
+            </div>
+
+            <!-- Tab Content Container -->
+            <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-6">
+
+                <!-- TAB 1: Vouchers Management -->
+                <div id="tab-content" class="space-y-5">
+                    
+                    <!-- Section Selection Mode for Split A5 -->
+                    <div id="sync-options-wrapper" class="bg-lavender-50 p-3 rounded-xl border border-lavender-200 space-y-2">
+                        <label class="text-xs font-bold text-lavender-900 uppercase tracking-wider block">Split A5 Mirroring</label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
+                            <input type="checkbox" id="sync-sections-checkbox" onchange="toggleSyncSections(this.checked)" checked class="w-4 h-4 text-lavender-600 rounded border-gray-300 focus:ring-lavender-500">
+                            <span>Mirror Top A5 to Bottom A5</span>
+                        </label>
+                        <p class="text-xs text-gray-500">When checked, bottom A5 automatically duplicates top A5 vouchers.</p>
+                    </div>
+
+                    <!-- Target Section Switcher (If Split A4 and not synced) -->
+                    <div id="section-target-wrapper" class="hidden flex bg-gray-100 p-1 rounded-lg text-xs font-semibold">
+                        <button onclick="setEditingSection('top')" id="edit-sec-top" class="flex-1 py-1.5 rounded-md bg-white shadow text-lavender-700">Top A5 Section</button>
+                        <button onclick="setEditingSection('bottom')" id="edit-sec-bottom" class="flex-1 py-1.5 rounded-md text-gray-600">Bottom A5 Section</button>
+                    </div>
+
+                    <!-- Vouchers Header & Add Button -->
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                            <i data-lucide="list-plus" class="w-4 h-4 text-lavender-600"></i>
+                            <span>Voucher Cards List</span>
+                        </h2>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openBulkImportModal()" class="px-2.5 py-1.5 text-xs font-semibold text-lavender-700 bg-lavender-100 hover:bg-lavender-200 rounded-lg flex items-center gap-1 transition-colors">
+                                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                                <span>Bulk</span>
+                            </button>
+                            <button onclick="addNewVoucher()" class="px-3 py-1.5 text-xs font-semibold text-white bg-lavender-600 hover:bg-lavender-700 rounded-lg flex items-center gap-1 transition-colors shadow-sm">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                <span>Add Voucher</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Voucher Items Forms Container -->
+                    <div id="voucher-items-container" class="space-y-4">
+                        <!-- Rendered via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- TAB 2: Page & Grid Layout Settings -->
+                <div id="tab-page" class="hidden space-y-6">
+                    
+                    <!-- 1. Page Layout Selection -->
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">1. Sheet Page Format</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="layout-type-split" onclick="setPageLayoutType('split')" class="p-3 border-2 rounded-xl flex flex-col items-center text-center gap-1.5 border-lavender-600 bg-lavender-50 text-lavender-700">
+                                <i data-lucide="scissors" class="w-5 h-5"></i>
+                                <span class="font-bold text-xs">2 x A5 Sheets</span>
+                                <span class="text-[10px] text-gray-500">Split A4 with Cut Line</span>
+                            </button>
+                            <button id="layout-type-full" onclick="setPageLayoutType('full')" class="p-3 border-2 rounded-xl flex flex-col items-center text-center gap-1.5 border-gray-200 text-gray-600 hover:border-gray-300">
+                                <i data-lucide="file" class="w-5 h-5"></i>
+                                <span class="font-bold text-xs">1 x Full A4 Sheet</span>
+                                <span class="text-[10px] text-gray-500">Single Full Page</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-100">
+
+                    <!-- 2. Column Grid Selection (1, 2, 3, or 4 Columns) -->
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">2. Column Grid Layout</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button id="col-btn-1" onclick="setColumnCount(1)" class="p-2 border-2 rounded-xl flex flex-col items-center text-center gap-1 border-gray-200 text-gray-600 hover:border-gray-300">
+                                <i data-lucide="square" class="w-4 h-4"></i>
+                                <span class="font-bold text-xs">1 Col</span>
+                            </button>
+                            <button id="col-btn-2" onclick="setColumnCount(2)" class="p-2 border-2 rounded-xl flex flex-col items-center text-center gap-1 border-lavender-600 bg-lavender-50 text-lavender-700">
+                                <i data-lucide="columns-2" class="w-4 h-4"></i>
+                                <span class="font-bold text-xs">2 Cols</span>
+                            </button>
+                            <button id="col-btn-3" onclick="setColumnCount(3)" class="p-2 border-2 rounded-xl flex flex-col items-center text-center gap-1 border-gray-200 text-gray-600 hover:border-gray-300">
+                                <i data-lucide="columns-3" class="w-4 h-4"></i>
+                                <span class="font-bold text-xs">3 Cols</span>
+                            </button>
+                            <button id="col-btn-4" onclick="setColumnCount(4)" class="p-2 border-2 rounded-xl flex flex-col items-center text-center gap-1 border-gray-200 text-gray-600 hover:border-gray-300">
+                                <i data-lucide="grid-3x3" class="w-4 h-4"></i>
+                                <span class="font-bold text-xs">4 Cols</span>
+                            </button>
+                        </div>
+                        <p id="col-tip-text" class="text-[11px] text-gray-500 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                            Automatic font scaling and barcode height adjustment enabled for multi-column grids.
+                        </p>
+                    </div>
+
+                    <hr class="border-gray-100">
+
+                    <!-- 3. Global Barcode Type Selection -->
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">3. Barcode Standard Format</label>
+                        <select id="global-barcode-format" onchange="updateGlobalBarcodeFormat(this.value)" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-lavender-500 font-medium bg-white">
+                            <option value="CODE128">CODE128 (Standard Alphanumeric - Default)</option>
+                            <option value="CODE39">CODE39 (Uppercase Alphanumeric)</option>
+                            <option value="EAN13">EAN-13 (12-13 Digits)</option>
+                            <option value="EAN8">EAN-8 (7-8 Digits)</option>
+                            <option value="UPC">UPC-A (11-12 Digits)</option>
+                            <option value="ITF14">ITF-14 (14 Numeric Digits)</option>
+                            <option value="QR">QR Code (2D Matrix Code)</option>
+                        </select>
+                        <p id="barcode-format-tip" class="text-[11px] text-gray-500 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                            CODE128 supports standard letters, numbers, and symbols.
+                        </p>
+                    </div>
+
+                    <hr class="border-gray-100">
+
+                    <!-- 4. Spacing Adjustments -->
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">4. Grid Spacing & Margins</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium block">Gap Between Boxes (mm)</label>
+                                <input type="number" id="box-gap-input" min="0" max="20" value="4" oninput="updateLayoutConfig()" class="w-full px-2.5 py-1.5 text-xs border rounded-lg">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium block">Edge Padding (mm)</label>
+                                <input type="number" id="section-padding-input" min="2" max="25" value="6" oninput="updateLayoutConfig()" class="w-full px-2.5 py-1.5 text-xs border rounded-lg">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="cut-line-option-wrapper" class="pt-2 border-t border-gray-100">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
+                            <input type="checkbox" id="show-cut-line" onchange="updateLayoutConfig()" checked class="w-4 h-4 text-lavender-600 rounded border-gray-300">
+                            <span>Show middle cut line indicator (Dashed line)</span>
+                        </label>
+                    </div>
+
+                </div>
+
+                <!-- TAB 3: Style & Sheet Header -->
+                <div id="tab-style" class="hidden space-y-6">
+                    
+                    <!-- Sheet Header & Logo -->
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">Header & Logo (Top Left)</label>
+                        
+                        <div class="flex items-center gap-3">
+                            <div id="logo-preview-box" class="w-16 h-16 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center bg-gray-50 overflow-hidden shrink-0">
+                                <span class="text-[10px] text-gray-400">No Logo</span>
+                            </div>
+                            <div class="space-y-1.5 flex-1">
+                                <input type="file" id="logo-file-input" accept="image/*" onchange="handleLogoUpload(event)" class="hidden">
+                                <label for="logo-file-input" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
+                                    <i data-lucide="upload" class="w-3.5 h-3.5 mr-1.5 text-lavender-600"></i>
+                                    Upload Logo Image
+                                </label>
+                                <button onclick="removeLogo()" id="remove-logo-btn" class="hidden px-2 py-1 text-xs text-red-600 hover:underline">Remove Logo</button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 pt-2">
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium block">Header Subtext / Title</label>
+                                <input type="text" id="header-text-input" placeholder="e.g. OFFICIAL PROMOTION VOUCHERS" oninput="updateLayoutConfig()" class="w-full px-2.5 py-1.5 text-xs border rounded-lg focus:ring-1 focus:ring-lavender-500">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium block">Logo Height (mm)</label>
+                                <input type="range" id="logo-size-range" min="8" max="35" value="16" oninput="updateLayoutConfig()" class="w-full accent-lavender-600">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-100">
+
+                    <!-- Box Border & Global Styling -->
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">Voucher Box Border & Style</label>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium block">Border Color</label>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <input type="color" id="box-border-color" value="#5b21b6" onchange="updateStyleConfig()" class="w-8 h-8 rounded border cursor-pointer">
+                                    <span class="text-xs font-mono text-gray-600" id="border-color-hex">#5b21b6</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium block">Border Width (px)</label>
+                                <input type="number" id="box-border-width" min="1" max="6" value="2" oninput="updateStyleConfig()" class="w-full px-2 py-1.5 text-xs border rounded-lg mt-1">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium block">Box Padding (px)</label>
+                                <input type="number" id="box-padding-input" min="2" max="18" value="6" oninput="updateStyleConfig()" class="w-full px-2 py-1.5 text-xs border rounded-lg">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium block">Quick Batch Color</label>
+                                <button onclick="applyBgColorToAll('#ffffff')" class="w-full mt-0.5 px-2 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg border border-gray-300 transition-colors">
+                                    Reset All Backgrounds to White
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Panel Footer Status -->
+            <div class="p-3 bg-gray-50 border-t border-lavender-100 text-xs text-gray-500 flex items-center justify-between">
+                <span>Page: <strong id="status-page-format" class="text-gray-700">2 x A5 (Split)</strong></span>
+                <span id="voucher-count-badge" class="px-2 py-0.5 bg-lavender-100 text-lavender-800 font-semibold rounded-full">1 Voucher</span>
+            </div>
+        </section>
+
+        <!-- RIGHT LIVE PRINT PREVIEW PANEL -->
+        <section class="lg:col-span-7 xl:col-span-8 flex flex-col items-center">
+            
+            <!-- Zoom & Page Toolbar -->
+            <div class="no-print w-full max-w-2xl mb-3 flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-lavender-200 shadow-sm">
+                <div class="flex items-center gap-2 text-xs font-semibold text-gray-700">
+                    <i data-lucide="eye" class="w-4 h-4 text-lavender-600"></i>
+                    <span>Live Print Preview</span>
+                    <span id="preview-mode-tag" class="ml-2 px-2 py-0.5 text-[10px] bg-lavender-100 text-lavender-800 font-bold rounded">2 x A5 Split</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="adjustZoom(-0.1)" class="p-1 text-gray-600 hover:bg-lavender-100 rounded" title="Zoom Out">
+                        <i data-lucide="zoom-out" class="w-4 h-4"></i>
+                    </button>
+                    <span id="zoom-percentage" class="text-xs font-mono w-12 text-center text-gray-600">65%</span>
+                    <button onclick="adjustZoom(0.1)" class="p-1 text-gray-600 hover:bg-lavender-100 rounded" title="Zoom In">
+                        <i data-lucide="zoom-in" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="resetZoom()" class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 rounded text-gray-600 ml-1">Fit</button>
+                </div>
+            </div>
+
+            <!-- Viewport Container -->
+            <div id="zoom-viewport" class="w-full overflow-auto flex justify-center py-2 px-2 max-h-[calc(100vh-10rem)]">
+                
+                <!-- Physical A4 Canvas Element (210mm x 297mm) -->
+                <div id="a4-page-canvas" class="a4-page transition-transform origin-top flex flex-col">
+                    
+                    <!-- SPLIT A5 MODE CONTAINERS -->
+                    <div id="split-a5-wrapper" class="w-full h-full flex flex-col">
+                        
+                        <!-- TOP A5 SECTION -->
+                        <div id="a5-top" class="a5-section flex flex-col">
+                            <div id="header-top-a5" class="flex items-center justify-between px-6 pt-4 pb-1">
+                                <div class="flex items-center gap-3">
+                                    <img id="logo-img-top" src="" alt="Company Logo" class="hidden object-contain max-h-[16mm]">
+                                    <span id="header-text-top" class="text-xs font-bold text-gray-800 uppercase tracking-wide hidden"></span>
+                                </div>
+                                <span class="text-[9px] text-gray-400 font-mono">A5 - TOP SECTION</span>
+                            </div>
+
+                            <div id="vouchers-container-top" class="flex-1 px-6 pb-3">
+                                <!-- Dynamic Vouchers Rendered Here -->
+                            </div>
+                        </div>
+
+                        <!-- CUT LINE INDICATOR -->
+                        <div id="cut-line-separator" class="print-cut-line w-full border-t-2 border-dashed border-lavender-300 relative flex items-center justify-center my-0">
+                            <span class="no-print absolute bg-lavender-100 text-lavender-700 text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-lavender-300 transform -translate-y-1/2 flex items-center gap-1 shadow-sm">
+                                <i data-lucide="scissors" class="w-3 h-3"></i> CUT LINE (MIDPOINT)
+                            </span>
+                        </div>
+
+                        <!-- BOTTOM A5 SECTION -->
+                        <div id="a5-bottom" class="a5-section flex flex-col">
+                            <div id="header-bottom-a5" class="flex items-center justify-between px-6 pt-4 pb-1">
+                                <div class="flex items-center gap-3">
+                                    <img id="logo-img-bottom" src="" alt="Company Logo" class="hidden object-contain max-h-[16mm]">
+                                    <span id="header-text-bottom" class="text-xs font-bold text-gray-800 uppercase tracking-wide hidden"></span>
+                                </div>
+                                <span class="text-[9px] text-gray-400 font-mono">A5 - BOTTOM SECTION</span>
+                            </div>
+
+                            <div id="vouchers-container-bottom" class="flex-1 px-6 pb-3">
+                                <!-- Dynamic Vouchers Rendered Here -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- FULL A4 MODE CONTAINER -->
+                    <div id="full-a4-wrapper" class="w-full h-full flex flex-col hidden">
+                        <div id="header-full-a4" class="flex items-center justify-between px-8 pt-5 pb-2">
+                            <div class="flex items-center gap-4">
+                                <img id="logo-img-full" src="" alt="Company Logo" class="hidden object-contain max-h-[20mm]">
+                                <span id="header-text-full" class="text-sm font-bold text-gray-800 uppercase tracking-wide hidden"></span>
+                            </div>
+                            <span class="text-[9px] text-gray-400 font-mono">FULL A4 SHEET</span>
+                        </div>
+
+                        <div id="vouchers-container-full" class="flex-1 px-8 pb-5">
+                            <!-- Dynamic Vouchers Rendered Here -->
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- BULK IMPORT MODAL -->
+    <div id="bulk-import-modal" class="no-print fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-lavender-200 space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-base text-gray-900 flex items-center gap-2">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5 text-lavender-600"></i>
+                    <span>Batch Bulk Import Vouchers</span>
+                </h3>
+                <button onclick="closeBulkImportModal()" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-gray-600">
+                Paste list of codes below (one per line). Optionally format as: <code class="bg-gray-100 px-1 py-0.5 rounded text-lavender-700 font-bold">Code, Description</code>
+            </p>
+
+            <textarea id="bulk-text-input" rows="7" placeholder="200055064849005&#10;200055064849006, Special Promotional Discount&#10;200055064849007, Loyalty Reward Coupon" class="w-full px-3 py-2 text-xs border rounded-xl font-mono focus:ring-2 focus:ring-lavender-500"></textarea>
+
+            <div class="flex items-center justify-between pt-2">
+                <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+                    <input type="checkbox" id="bulk-replace-check" class="w-4 h-4 text-lavender-600 rounded">
+                    <span>Replace existing vouchers</span>
+                </label>
+                <div class="flex gap-2">
+                    <button onclick="closeBulkImportModal()" class="px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                    <button onclick="processBulkImport()" class="px-4 py-1.5 text-xs font-semibold text-white bg-lavender-600 hover:bg-lavender-700 rounded-lg shadow">Import Vouchers</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- APPLICATION STATE ---
+        const state = {
+            pageLayoutType: 'split', // 'split' (2 x A5) or 'full' (1 x A4)
+            columns: 2, // 1, 2, 3, or 4 columns
+            synced: true, // For split mode: auto-mirror top to bottom
+            activeEditSection: 'top', // 'top' or 'bottom'
+            globalBarcodeFormat: 'CODE128',
+            currentZoom: 0.65,
+            layout: {
+                showCutLine: true,
+                logoUrl: '',
+                logoHeight: 16, // mm
+                headerText: '',
+                boxGap: 4, // mm
+                sectionPadding: 6 // mm
+            },
+            style: {
+                borderColor: '#5b21b6', // Deep purple border
+                borderWidth: 2, // px
+                padding: 6 // px
+            },
+            vouchersTop: [],
+            vouchersBottom: [],
+            vouchersFull: []
+        };
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Sample Data Handler (Clean design without Badge Tag, with background colors)
+        function loadSampleData() {
+            const sampleVoucher = {
+                id: 'v_' + Date.now(),
+                bgColor: '#ffffff', // Default clean white
+                description: 'Off SPOD WBW any compatible device',
+                validityText: '21/04/2025 - 20/08/2026',
+                instructionText: 'If barcode does not scan, enter:',
+                codeValue: '200055064849005',
+                formatOverride: 'DEFAULT'
+            };
+
+            state.vouchersTop = [
+                { ...sampleVoucher, id: 'v1_' + Date.now(), bgColor: '#ffffff' },
+                { ...sampleVoucher, id: 'v2_' + Date.now(), description: 'Special Discount Voucher', codeValue: '200055064849012', bgColor: '#f3e8ff' }
+            ];
+            state.vouchersBottom = [
+                { ...sampleVoucher, id: 'v3_' + Date.now(), bgColor: '#ffffff' },
+                { ...sampleVoucher, id: 'v4_' + Date.now(), description: 'Special Discount Voucher', codeValue: '200055064849012', bgColor: '#f3e8ff' }
+            ];
+            state.vouchersFull = [ 
+                { ...sampleVoucher, id: 'vf1_' + Date.now(), bgColor: '#ffffff' },
+                { ...sampleVoucher, id: 'vf2_' + Date.now(), description: 'Special Discount Voucher', codeValue: '200055064849012', bgColor: '#f3e8ff' },
+                { ...sampleVoucher, id: 'vf3_' + Date.now(), description: 'Loyalty Coupon Offer', codeValue: '200055064849033', bgColor: '#fef9c3' },
+                { ...sampleVoucher, id: 'vf4_' + Date.now(), description: 'Standard Store Credit', codeValue: '200055064849044', bgColor: '#dbeafe' }
+            ];
+
+            state.synced = true;
+            document.getElementById('sync-sections-checkbox').checked = true;
+
+            renderAll();
+        }
+
+        function setColumnCount(cols) {
+            state.columns = cols;
+            
+            [1, 2, 3, 4].forEach(c => {
+                const btn = document.getElementById(`col-btn-${c}`);
+                if (c === cols) {
+                    btn.className = "p-2 border-2 rounded-xl flex flex-col items-center text-center gap-1 border-lavender-600 bg-lavender-50 text-lavender-700 font-bold";
+                } else {
+                    btn.className = "p-2 border-2 rounded-xl flex flex-col items-center text-center gap-1 border-gray-200 text-gray-600 hover:border-gray-300";
+                }
+            });
+
+            const colTips = {
+                1: 'Single column layout: Maximized text size & scan area.',
+                2: 'Two column grid: Ideal standard layout for vouchers.',
+                3: 'Three column grid: Compact layout for high density.',
+                4: 'Four column grid: Ultra-compact mini voucher labels layout.'
+            };
+            document.getElementById('col-tip-text').innerText = colTips[cols];
+
+            renderPreview();
+        }
+
+        function setPageLayoutType(type) {
+            state.pageLayoutType = type;
+            
+            const btnSplit = document.getElementById('layout-type-split');
+            const btnFull = document.getElementById('layout-type-full');
+            const splitWrapper = document.getElementById('split-a5-wrapper');
+            const fullWrapper = document.getElementById('full-a4-wrapper');
+            const syncWrapper = document.getElementById('sync-options-wrapper');
+            const sectionTargetWrapper = document.getElementById('section-target-wrapper');
+            const statusFormat = document.getElementById('status-page-format');
+            const previewTag = document.getElementById('preview-mode-tag');
+            const cutLineOptionWrapper = document.getElementById('cut-line-option-wrapper');
+
+            if (type === 'split') {
+                btnSplit.className = "p-3 border-2 rounded-xl flex flex-col items-center text-center gap-1.5 border-lavender-600 bg-lavender-50 text-lavender-700";
+                btnFull.className = "p-3 border-2 rounded-xl flex flex-col items-center text-center gap-1.5 border-gray-200 text-gray-600 hover:border-gray-300";
+                
+                splitWrapper.classList.remove('hidden');
+                fullWrapper.classList.add('hidden');
+                syncWrapper.classList.remove('hidden');
+                if (!state.synced) sectionTargetWrapper.classList.remove('hidden');
+                cutLineOptionWrapper.classList.remove('hidden');
+
+                statusFormat.innerText = "2 x A5 (Split A4)";
+                previewTag.innerText = "2 x A5 Split";
+            } else {
+                btnFull.className = "p-3 border-2 rounded-xl flex flex-col items-center text-center gap-1.5 border-lavender-600 bg-lavender-50 text-lavender-700";
+                btnSplit.className = "p-3 border-2 rounded-xl flex flex-col items-center text-center gap-1.5 border-gray-200 text-gray-600 hover:border-gray-300";
+                
+                fullWrapper.classList.remove('hidden');
+                splitWrapper.classList.add('hidden');
+                syncWrapper.classList.add('hidden');
+                sectionTargetWrapper.classList.add('hidden');
+                cutLineOptionWrapper.classList.add('hidden');
+
+                statusFormat.innerText = "1 x Full A4 Sheet";
+                previewTag.innerText = "Full A4 Sheet";
+            }
+
+            renderAll();
+        }
+
+        function getCurrentVoucherList() {
+            if (state.pageLayoutType === 'full') {
+                return state.vouchersFull;
+            } else {
+                if (state.synced || state.activeEditSection === 'top') {
+                    return state.vouchersTop;
+                } else {
+                    return state.vouchersBottom;
+                }
+            }
+        }
+
+        function addNewVoucher() {
+            const list = getCurrentVoucherList();
+            
+            let defaultCode = '200055064849005';
+            if (state.globalBarcodeFormat === 'EAN13') defaultCode = '9780201379624';
+            if (state.globalBarcodeFormat === 'EAN8') defaultCode = '96385074';
+            if (state.globalBarcodeFormat === 'UPC') defaultCode = '012345678905';
+            if (state.globalBarcodeFormat === 'ITF14') defaultCode = '10012345678902';
+
+            const newVoucher = {
+                id: 'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                bgColor: '#ffffff',
+                description: 'Off SPOD WBW any compatible device',
+                validityText: '21/04/2025 - 20/08/2026',
+                instructionText: 'If barcode does not scan, enter:',
+                codeValue: defaultCode,
+                formatOverride: 'DEFAULT'
+            };
+
+            list.push(newVoucher);
+            renderAll();
+        }
+
+        function removeVoucher(id) {
+            if (state.pageLayoutType === 'full') {
+                state.vouchersFull = state.vouchersFull.filter(v => v.id !== id);
+            } else {
+                state.vouchersTop = state.vouchersTop.filter(v => v.id !== id);
+                state.vouchersBottom = state.vouchersBottom.filter(v => v.id !== id);
+            }
+            renderAll();
+        }
+
+        function duplicateVoucher(id) {
+            const list = getCurrentVoucherList();
+            const target = list.find(v => v.id === id);
+            if (target) {
+                const clone = { ...target, id: 'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4) };
+                list.push(clone);
+                renderAll();
+            }
+        }
+
+        function applyBgColorToAll(color) {
+            const list = getCurrentVoucherList();
+            list.forEach(v => v.bgColor = color);
+            renderAll();
+        }
+
+        function openBulkImportModal() {
+            document.getElementById('bulk-import-modal').classList.remove('hidden');
+        }
+
+        function closeBulkImportModal() {
+            document.getElementById('bulk-import-modal').classList.add('hidden');
+        }
+
+        function processBulkImport() {
+            const text = document.getElementById('bulk-text-input').value.trim();
+            const replace = document.getElementById('bulk-replace-check').checked;
+
+            if (!text) return;
+
+            const lines = text.split('\n');
+            const newItems = [];
+
+            lines.forEach((line, idx) => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+
+                const parts = trimmed.split(',');
+                const code = parts[0] ? parts[0].trim() : '20005506484900' + idx;
+                const desc = parts[1] ? parts[1].trim() : 'Off SPOD WBW any compatible device';
+
+                newItems.push({
+                    id: 'v_bulk_' + Date.now() + '_' + idx,
+                    bgColor: '#ffffff',
+                    description: desc,
+                    validityText: '21/04/2025 - 20/08/2026',
+                    instructionText: 'If barcode does not scan, enter:',
+                    codeValue: code,
+                    formatOverride: 'DEFAULT'
+                });
+            });
+
+            if (newItems.length > 0) {
+                const targetList = getCurrentVoucherList();
+                if (replace) {
+                    targetList.length = 0;
+                }
+                targetList.push(...newItems);
+                closeBulkImportModal();
+                renderAll();
+            }
+        }
+
+        function updateGlobalBarcodeFormat(format) {
+            state.globalBarcodeFormat = format;
+            
+            const tipEl = document.getElementById('barcode-format-tip');
+            const tips = {
+                'CODE128': 'CODE128 supports standard numbers, letters, and punctuation.',
+                'CODE39': 'CODE39 supports uppercase letters (A-Z), numbers (0-9), and spaces.',
+                'EAN13': 'EAN-13 requires exactly 12 or 13 numeric digits.',
+                'EAN8': 'EAN-8 requires exactly 7 or 8 numeric digits.',
+                'UPC': 'UPC-A requires exactly 11 or 12 numeric digits.',
+                'ITF14': 'ITF-14 requires exactly 14 numeric digits.',
+                'QR': 'QR Code encodes any text, URLs, or numeric serials.'
+            };
+            tipEl.innerText = tips[format] || '';
+
+            renderAll();
+        }
+
+        function updateVoucherField(id, field, value) {
+            const list = getCurrentVoucherList();
+            const voucher = list.find(v => v.id === id);
+            if (voucher) {
+                voucher[field] = value;
+                if (field === 'bgColor') {
+                    renderPreview();
+                    renderVoucherForms(); // Keep color chips updated
+                } else {
+                    renderPreview();
+                }
+            }
+        }
+
+        function switchTab(tabName) {
+            ['content', 'page', 'style'].forEach(tab => {
+                const contentEl = document.getElementById(`tab-${tab}`);
+                const btnEl = document.getElementById(`tab-btn-${tab}`);
+                if (tab === tabName) {
+                    contentEl.classList.remove('hidden');
+                    btnEl.classList.add('bg-white', 'text-lavender-700', 'shadow-sm');
+                    btnEl.classList.remove('text-gray-600');
+                } else {
+                    contentEl.classList.add('hidden');
+                    btnEl.classList.remove('bg-white', 'text-lavender-700', 'shadow-sm');
+                    btnEl.classList.add('text-gray-600');
+                }
+            });
+        }
+
+        function toggleSyncSections(checked) {
+            state.synced = checked;
+            const targetWrapper = document.getElementById('section-target-wrapper');
+            if (checked) {
+                targetWrapper.classList.add('hidden');
+            } else {
+                targetWrapper.classList.remove('hidden');
+                if (state.vouchersBottom.length === 0) {
+                    state.vouchersBottom = JSON.parse(JSON.stringify(state.vouchersTop));
+                }
+            }
+            renderAll();
+        }
+
+        function setEditingSection(section) {
+            state.activeEditSection = section;
+            const btnTop = document.getElementById('edit-sec-top');
+            const btnBottom = document.getElementById('edit-sec-bottom');
+
+            if (section === 'top') {
+                btnTop.classList.add('bg-white', 'shadow', 'text-lavender-700');
+                btnTop.classList.remove('text-gray-600');
+                btnBottom.classList.remove('bg-white', 'shadow', 'text-lavender-700');
+                btnBottom.classList.add('text-gray-600');
+            } else {
+                btnBottom.classList.add('bg-white', 'shadow', 'text-lavender-700');
+                btnBottom.classList.remove('text-gray-600');
+                btnTop.classList.remove('bg-white', 'shadow', 'text-lavender-700');
+                btnTop.classList.add('text-gray-600');
+            }
+
+            renderVoucherForms();
+        }
+
+        function handleLogoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    state.layout.logoUrl = event.target.result;
+                    document.getElementById('logo-preview-box').innerHTML = `<img src="${event.target.result}" class="w-full h-full object-contain p-1">`;
+                    document.getElementById('remove-logo-btn').classList.remove('hidden');
+                    renderPreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeLogo() {
+            state.layout.logoUrl = '';
+            document.getElementById('logo-file-input').value = '';
+            document.getElementById('logo-preview-box').innerHTML = `<span class="text-[10px] text-gray-400">No Logo</span>`;
+            document.getElementById('remove-logo-btn').classList.add('hidden');
+            renderPreview();
+        }
+
+        function updateLayoutConfig() {
+            state.layout.showCutLine = document.getElementById('show-cut-line').checked;
+            state.layout.logoHeight = parseInt(document.getElementById('logo-size-range').value) || 16;
+            state.layout.headerText = document.getElementById('header-text-input').value;
+            state.layout.boxGap = parseInt(document.getElementById('box-gap-input').value) || 4;
+            state.layout.sectionPadding = parseInt(document.getElementById('section-padding-input').value) || 6;
+
+            renderPreview();
+        }
+
+        function updateStyleConfig() {
+            state.style.borderColor = document.getElementById('box-border-color').value;
+            state.style.borderWidth = parseInt(document.getElementById('box-border-width').value) || 2;
+            state.style.padding = parseInt(document.getElementById('box-padding-input').value) || 6;
+
+            document.getElementById('border-color-hex').innerText = state.style.borderColor;
+
+            renderPreview();
+        }
+
+        function renderVoucherForms() {
+            const container = document.getElementById('voucher-items-container');
+            const list = getCurrentVoucherList();
+
+            document.getElementById('voucher-count-badge').innerText = `${list.length} Voucher${list.length !== 1 ? 's' : ''}`;
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center border-2 border-dashed border-gray-200 rounded-xl">
+                        <p class="text-xs text-gray-500 mb-2">No vouchers in this section yet.</p>
+                        <button onclick="addNewVoucher()" class="px-3 py-1.5 text-xs font-semibold text-lavender-700 bg-lavender-100 hover:bg-lavender-200 rounded-lg">
+                            + Add First Voucher
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = list.map((v, index) => {
+                const currentBg = v.bgColor || '#ffffff';
+                return `
+                <div class="border border-lavender-200 rounded-xl p-3 bg-white shadow-sm space-y-2.5 relative">
+                    <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                        <span class="text-xs font-bold text-lavender-800 flex items-center gap-1">
+                            <i data-lucide="tag" class="w-3.5 h-3.5"></i> Voucher #${index + 1}
+                        </span>
+                        <div class="flex items-center gap-1">
+                            <button onclick="duplicateVoucher('${v.id}')" class="p-1 text-gray-400 hover:text-lavender-600 rounded" title="Duplicate">
+                                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="removeVoucher('${v.id}')" class="p-1 text-gray-400 hover:text-red-600 rounded" title="Delete">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Individual Box Background Color Picker -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[10px] font-semibold text-gray-600">Box Background Color</label>
+                            <button onclick="applyBgColorToAll('${currentBg}')" class="text-[10px] font-semibold text-lavender-700 hover:underline bg-lavender-50 px-1.5 py-0.5 rounded border border-lavender-200">
+                                Apply to All Boxes
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="color" value="${currentBg}" onchange="updateVoucherField('${v.id}', 'bgColor', this.value)" class="w-7 h-7 rounded border border-gray-300 shrink-0 cursor-pointer p-0.5 bg-white">
+                            
+                            <!-- Quick Color Preset Swatches -->
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#ffffff')" class="w-5 h-5 rounded-full border border-gray-300 bg-white ${currentBg === '#ffffff' ? 'ring-2 ring-lavender-600' : ''}" title="Pure White (Ink-Friendly)"></button>
+                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#f3e8ff')" class="w-5 h-5 rounded-full border border-gray-300 bg-purple-100 ${currentBg === '#f3e8ff' ? 'ring-2 ring-lavender-600' : ''}" title="Light Purple"></button>
+                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#fef9c3')" class="w-5 h-5 rounded-full border border-gray-300 bg-yellow-100 ${currentBg === '#fef9c3' ? 'ring-2 ring-lavender-600' : ''}" title="Soft Yellow"></button>
+                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#dbeafe')" class="w-5 h-5 rounded-full border border-gray-300 bg-blue-100 ${currentBg === '#dbeafe' ? 'ring-2 ring-lavender-600' : ''}" title="Light Blue"></button>
+                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#dcfce7')" class="w-5 h-5 rounded-full border border-gray-300 bg-green-100 ${currentBg === '#dcfce7' ? 'ring-2 ring-lavender-600' : ''}" title="Light Green"></button>
+                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#f3f4f6')" class="w-5 h-5 rounded-full border border-gray-300 bg-gray-100 ${currentBg === '#f3f4f6' ? 'ring-2 ring-lavender-600' : ''}" title="Light Grey"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-semibold text-gray-500 block">Description Text</label>
+                        <input type="text" value="${escapeHtml(v.description)}" oninput="updateVoucherField('${v.id}', 'description', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-semibold text-gray-500 block">Validity Date Range</label>
+                        <input type="text" value="${escapeHtml(v.validityText)}" oninput="updateVoucherField('${v.id}', 'validityText', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] font-semibold text-gray-500 block">Instruction Line</label>
+                            <input type="text" value="${escapeHtml(v.instructionText)}" oninput="updateVoucherField('${v.id}', 'instructionText', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-semibold text-gray-500 block">Code / Serial Value</label>
+                            <input type="text" value="${escapeHtml(v.codeValue)}" oninput="updateVoucherField('${v.id}', 'codeValue', this.value)" class="w-full px-2 py-1 text-xs border rounded font-mono font-bold focus:ring-1 focus:ring-lavender-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] font-semibold text-gray-500 block">Barcode Override</label>
+                        <select onchange="updateVoucherField('${v.id}', 'formatOverride', this.value)" class="w-full px-2 py-1 text-xs border rounded bg-white font-medium">
+                            <option value="DEFAULT" ${v.formatOverride === 'DEFAULT' ? 'selected' : ''}>Global Standard (${state.globalBarcodeFormat})</option>
+                            <option value="CODE128" ${v.formatOverride === 'CODE128' ? 'selected' : ''}>CODE128</option>
+                            <option value="CODE39" ${v.formatOverride === 'CODE39' ? 'selected' : ''}>CODE39</option>
+                            <option value="EAN13" ${v.formatOverride === 'EAN13' ? 'selected' : ''}>EAN-13</option>
+                            <option value="EAN8" ${v.formatOverride === 'EAN8' ? 'selected' : ''}>EAN-8</option>
+                            <option value="UPC" ${v.formatOverride === 'UPC' ? 'selected' : ''}>UPC-A</option>
+                            <option value="ITF14" ${v.formatOverride === 'ITF14' ? 'selected' : ''}>ITF-14</option>
+                            <option value="QR" ${v.formatOverride === 'QR' ? 'selected' : ''}>QR Code</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function escapeHtml(str) {
+            return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function renderPreview() {
+            // Cut Line visibility
+            const cutLine = document.getElementById('cut-line-separator');
+            if (state.layout.showCutLine) {
+                cutLine.classList.remove('hidden');
+            } else {
+                cutLine.classList.add('hidden');
+            }
+
+            // Render Logos and Headers
+            ['top', 'bottom', 'full'].forEach(sec => {
+                const logoImg = document.getElementById(`logo-img-${sec}`);
+                const headerText = document.getElementById(`header-text-${sec}`);
+
+                if (logoImg) {
+                    if (state.layout.logoUrl) {
+                        logoImg.src = state.layout.logoUrl;
+                        logoImg.style.maxHeight = `${state.layout.logoHeight}mm`;
+                        logoImg.classList.remove('hidden');
+                    } else {
+                        logoImg.classList.add('hidden');
+                    }
+                }
+
+                if (headerText) {
+                    if (state.layout.headerText) {
+                        headerText.innerText = state.layout.headerText;
+                        headerText.classList.remove('hidden');
+                    } else {
+                        headerText.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Render Vouchers Containers based on Page Layout Type
+            if (state.pageLayoutType === 'split') {
+                const topList = state.vouchersTop;
+                const bottomList = state.synced ? state.vouchersTop : state.vouchersBottom;
+
+                renderVoucherContainer('vouchers-container-top', topList);
+                renderVoucherContainer('vouchers-container-bottom', bottomList);
+            } else {
+                renderVoucherContainer('vouchers-container-full', state.vouchersFull);
+            }
+
+            setTimeout(generateBarcodes, 20);
+        }
+
+        function renderVoucherContainer(containerId, voucherList) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const cols = state.columns;
+
+            // Apply container margins & grid configuration
+            container.style.paddingLeft = `${state.layout.sectionPadding}mm`;
+            container.style.paddingRight = `${state.layout.sectionPadding}mm`;
+            container.style.gap = `${state.layout.boxGap}mm`;
+
+            // Dynamic grid column CSS
+            const gridClassMap = {
+                1: 'grid grid-cols-1 align-start content-start',
+                2: 'grid grid-cols-2 align-start content-start',
+                3: 'grid grid-cols-3 align-start content-start',
+                4: 'grid grid-cols-4 align-start content-start'
+            };
+            container.className = `flex-1 ${gridClassMap[cols] || 'grid grid-cols-2'}`;
+
+            if (voucherList.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-xs text-gray-300 italic text-center my-auto">Section Empty</div>`;
+                return;
+            }
+
+            // AUTO-SCALE DYNAMIC TYPOGRAPHY & BARCODE HEIGHTS BASED ON COLUMNS
+            let titleFontClass = 'text-xs';
+            let dateFontClass = 'text-[11px]';
+            let instructFontClass = 'text-[9px]';
+            let codeFontClass = 'text-xs';
+            let bcHeight = 36;
+            let qrSize = 60;
+            let boxPad = state.style.padding;
+
+            if (cols === 1) {
+                titleFontClass = 'text-sm';
+                dateFontClass = 'text-xs';
+                instructFontClass = 'text-[10px]';
+                codeFontClass = 'text-sm';
+                bcHeight = 44;
+                qrSize = 75;
+            } else if (cols === 2) {
+                titleFontClass = 'text-xs';
+                dateFontClass = 'text-[10px]';
+                instructFontClass = 'text-[9px]';
+                codeFontClass = 'text-xs';
+                bcHeight = 34;
+                qrSize = 58;
+            } else if (cols === 3) {
+                titleFontClass = 'text-[10px]';
+                dateFontClass = 'text-[9px]';
+                instructFontClass = 'text-[8px]';
+                codeFontClass = 'text-[10px]';
+                bcHeight = 26;
+                qrSize = 45;
+                boxPad = Math.min(boxPad, 4);
+            } else if (cols === 4) {
+                titleFontClass = 'text-[9px]';
+                dateFontClass = 'text-[8px]';
+                instructFontClass = 'text-[7px]';
+                codeFontClass = 'text-[9px]';
+                bcHeight = 20;
+                qrSize = 36;
+                boxPad = Math.min(boxPad, 3);
+            }
+
+            container.innerHTML = voucherList.map((v, i) => {
+                const effectiveFormat = (v.formatOverride && v.formatOverride !== 'DEFAULT') 
+                    ? v.formatOverride 
+                    : state.globalBarcodeFormat;
+
+                const elementId = `bc_${containerId}_${v.id}_${i}`;
+                const isQR = effectiveFormat === 'QR';
+                const bgColor = v.bgColor || '#ffffff';
+
+                return `
+                    <div class="voucher-box text-center shadow-xs" style="
+                        background-color: ${bgColor};
+                        border-color: ${state.style.borderColor};
+                        border-width: ${state.style.borderWidth}px;
+                        padding: ${boxPad}px;
+                        border-radius: 4px;
+                    ">
+                        <!-- Description -->
+                        <div class="font-bold text-gray-900 leading-tight mb-0.5 ${titleFontClass}">
+                            <span>${escapeHtml(v.description)}</span>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="text-gray-800 font-semibold leading-tight mb-0.5 ${dateFontClass}">
+                            ${escapeHtml(v.validityText)}
+                        </div>
+
+                        <!-- Instruction Text -->
+                        <div class="text-gray-600 leading-tight ${instructFontClass}">
+                            ${escapeHtml(v.instructionText)}
+                        </div>
+
+                        <!-- Code String -->
+                        <div class="font-mono font-extrabold text-gray-900 tracking-wider my-0.5 ${codeFontClass}">
+                            ${escapeHtml(v.codeValue)}
+                        </div>
+
+                        <!-- Barcode Image Target -->
+                        <div class="flex justify-center w-full overflow-hidden mt-0.5">
+                            ${isQR 
+                                ? `<div id="${elementId}" class="flex items-center justify-center py-0.5" data-qr-size="${qrSize}"></div>`
+                                : `<svg id="${elementId}" class="max-w-full h-auto" data-bc-height="${bcHeight}"></svg>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function generateBarcodes() {
+            // Render 1D Linear Barcodes
+            const allSvgs = document.querySelectorAll('.voucher-box svg[id^="bc_"]');
+            allSvgs.forEach(svgEl => {
+                const parts = svgEl.id.split('_');
+                const voucherId = parts[3];
+                const containerId = parts[1] + '_' + parts[2];
+                const customHeight = parseInt(svgEl.getAttribute('data-bc-height')) || 34;
+                
+                let list = state.vouchersFull;
+                if (state.pageLayoutType === 'split') {
+                    list = containerId.includes('top') ? state.vouchersTop : (state.synced ? state.vouchersTop : state.vouchersBottom);
+                }
+
+                const voucher = list.find(v => v.id === voucherId) || list[0];
+
+                if (voucher && voucher.codeValue) {
+                    const format = (voucher.formatOverride && voucher.formatOverride !== 'DEFAULT')
+                        ? voucher.formatOverride
+                        : state.globalBarcodeFormat;
+
+                    try {
+                        JsBarcode(`#${svgEl.id}`, voucher.codeValue, {
+                            format: format === 'QR' ? 'CODE128' : format,
+                            width: state.columns >= 3 ? 1.2 : 1.5,
+                            height: customHeight,
+                            displayValue: false,
+                            margin: 0,
+                            background: "transparent",
+                            lineColor: "#000000"
+                        });
+                    } catch (err) {
+                        console.warn("Linear Barcode rendering error:", err);
+                        svgEl.innerHTML = `<text x="2" y="15" fill="red" font-size="8">Format Error</text>`;
+                    }
+                }
+            });
+
+            // Render 2D QR Codes
+            const allQrDivs = document.querySelectorAll('.voucher-box div[id^="bc_"]');
+            allQrDivs.forEach(qrDiv => {
+                const parts = qrDiv.id.split('_');
+                const voucherId = parts[3];
+                const containerId = parts[1] + '_' + parts[2];
+                const customSize = parseInt(qrDiv.getAttribute('data-qr-size')) || 55;
+                
+                let list = state.vouchersFull;
+                if (state.pageLayoutType === 'split') {
+                    list = containerId.includes('top') ? state.vouchersTop : (state.synced ? state.vouchersTop : state.vouchersBottom);
+                }
+
+                const voucher = list.find(v => v.id === voucherId) || list[0];
+
+                if (voucher && voucher.codeValue) {
+                    qrDiv.innerHTML = '';
+                    try {
+                        new QRCode(qrDiv, {
+                            text: voucher.codeValue,
+                            width: customSize,
+                            height: customSize,
+                            colorDark: "#000000",
+                            colorLight: "transparent",
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+                    } catch (err) {
+                        console.warn("QR Code rendering error:", err);
+                        qrDiv.innerHTML = `<span class="text-red-500 text-[8px]">QR Error</span>`;
+                    }
+                }
+            });
+        }
+
+        function adjustZoom(delta) {
+            state.currentZoom = Math.min(Math.max(0.35, state.currentZoom + delta), 1.25);
+            applyZoom();
+        }
+
+        function resetZoom() {
+            state.currentZoom = 0.65;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            const canvas = document.getElementById('a4-page-canvas');
+            canvas.style.transform = `scale(${state.currentZoom})`;
+            document.getElementById('zoom-percentage').innerText = `${Math.round(state.currentZoom * 100)}%`;
+        }
+
+        function renderAll() {
+            renderVoucherForms();
+            renderPreview();
+        }
+
+        window.onload = function() {
+            loadSampleData();
+            applyZoom();
+        };
+    </script>
+</body>
+</html>
