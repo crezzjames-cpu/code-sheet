@@ -154,8 +154,8 @@
                     <span class="sm:hidden">Import</span>
                 </button>
                 <button onclick="loadSampleData()" class="px-3 py-1.5 text-xs sm:text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-1.5">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-lavender-600"></i>
-                    <span class="hidden sm:inline">Load Sample</span>
+                    <i data-lucide="rotate-ccw" class="w-4 h-4 text-lavender-600"></i>
+                    <span class="hidden sm:inline">Reset Blank</span>
                 </button>
                 <button onclick="window.print()" class="px-4 py-1.5 text-xs sm:text-sm font-semibold text-white bg-lavender-600 hover:bg-lavender-700 rounded-lg shadow flex items-center gap-2 transition-all transform active:scale-95">
                     <i data-lucide="printer" class="w-4 h-4"></i>
@@ -400,7 +400,7 @@
             <!-- Panel Footer Status -->
             <div class="p-3 bg-gray-50 border-t border-lavender-100 text-xs text-gray-500 flex items-center justify-between">
                 <span>Page: <strong id="status-page-format" class="text-gray-700">2 x A5 (Split)</strong></span>
-                <span id="voucher-count-badge" class="px-2 py-0.5 bg-lavender-100 text-lavender-800 font-semibold rounded-full">1 Voucher</span>
+                <span id="voucher-count-badge" class="px-2 py-0.5 bg-lavender-100 text-lavender-800 font-semibold rounded-full">2 Vouchers</span>
             </div>
         </section>
 
@@ -560,31 +560,34 @@
         // Initialize Lucide Icons
         lucide.createIcons();
 
-        // Sample Data Handler (Clean design without Badge Tag, with background colors)
-        function loadSampleData() {
-            const sampleVoucher = {
-                id: 'v_' + Date.now(),
-                bgColor: '#ffffff', // Default clean white
-                description: 'Off SPOD WBW any compatible device',
-                validityText: '21/04/2025 - 20/08/2026',
-                instructionText: 'If barcode does not scan, enter:',
-                codeValue: '200055064849005',
+        // Create blank template vouchers ready for user input
+        function createBlankVoucher(idPrefix = 'v') {
+            return {
+                id: idPrefix + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                bgColor: '#ffffff',
+                description: '',
+                validityText: '',
+                instructionText: '',
+                codeValue: '',
                 formatOverride: 'DEFAULT'
             };
+        }
 
+        // Initialize blank templates
+        function loadSampleData() {
             state.vouchersTop = [
-                { ...sampleVoucher, id: 'v1_' + Date.now(), bgColor: '#ffffff' },
-                { ...sampleVoucher, id: 'v2_' + Date.now(), description: 'Special Discount Voucher', codeValue: '200055064849012', bgColor: '#f3e8ff' }
+                createBlankVoucher('v1'),
+                createBlankVoucher('v2')
             ];
             state.vouchersBottom = [
-                { ...sampleVoucher, id: 'v3_' + Date.now(), bgColor: '#ffffff' },
-                { ...sampleVoucher, id: 'v4_' + Date.now(), description: 'Special Discount Voucher', codeValue: '200055064849012', bgColor: '#f3e8ff' }
+                createBlankVoucher('v3'),
+                createBlankVoucher('v4')
             ];
             state.vouchersFull = [ 
-                { ...sampleVoucher, id: 'vf1_' + Date.now(), bgColor: '#ffffff' },
-                { ...sampleVoucher, id: 'vf2_' + Date.now(), description: 'Special Discount Voucher', codeValue: '200055064849012', bgColor: '#f3e8ff' },
-                { ...sampleVoucher, id: 'vf3_' + Date.now(), description: 'Loyalty Coupon Offer', codeValue: '200055064849033', bgColor: '#fef9c3' },
-                { ...sampleVoucher, id: 'vf4_' + Date.now(), description: 'Standard Store Credit', codeValue: '200055064849044', bgColor: '#dbeafe' }
+                createBlankVoucher('vf1'),
+                createBlankVoucher('vf2'),
+                createBlankVoucher('vf3'),
+                createBlankVoucher('vf4')
             ];
 
             state.synced = true;
@@ -672,24 +675,7 @@
 
         function addNewVoucher() {
             const list = getCurrentVoucherList();
-            
-            let defaultCode = '200055064849005';
-            if (state.globalBarcodeFormat === 'EAN13') defaultCode = '9780201379624';
-            if (state.globalBarcodeFormat === 'EAN8') defaultCode = '96385074';
-            if (state.globalBarcodeFormat === 'UPC') defaultCode = '012345678905';
-            if (state.globalBarcodeFormat === 'ITF14') defaultCode = '10012345678902';
-
-            const newVoucher = {
-                id: 'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-                bgColor: '#ffffff',
-                description: 'Off SPOD WBW any compatible device',
-                validityText: '21/04/2025 - 20/08/2026',
-                instructionText: 'If barcode does not scan, enter:',
-                codeValue: defaultCode,
-                formatOverride: 'DEFAULT'
-            };
-
-            list.push(newVoucher);
+            list.push(createBlankVoucher('v'));
             renderAll();
         }
 
@@ -741,15 +727,15 @@
                 if (!trimmed) return;
 
                 const parts = trimmed.split(',');
-                const code = parts[0] ? parts[0].trim() : '20005506484900' + idx;
-                const desc = parts[1] ? parts[1].trim() : 'Off SPOD WBW any compatible device';
+                const code = parts[0] ? parts[0].trim() : '';
+                const desc = parts[1] ? parts[1].trim() : '';
 
                 newItems.push({
                     id: 'v_bulk_' + Date.now() + '_' + idx,
                     bgColor: '#ffffff',
                     description: desc,
-                    validityText: '21/04/2025 - 20/08/2026',
-                    instructionText: 'If barcode does not scan, enter:',
+                    validityText: '',
+                    instructionText: '',
                     codeValue: code,
                     formatOverride: 'DEFAULT'
                 });
@@ -939,7 +925,7 @@
                             
                             <!-- Quick Color Preset Swatches -->
                             <div class="flex items-center gap-1.5 flex-wrap">
-                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#ffffff')" class="w-5 h-5 rounded-full border border-gray-300 bg-white ${currentBg === '#ffffff' ? 'ring-2 ring-lavender-600' : ''}" title="Pure White (Ink-Friendly)"></button>
+                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#ffffff')" class="w-5 h-5 rounded-full border border-gray-300 bg-white ${currentBg === '#ffffff' ? 'ring-2 ring-lavender-600' : ''}" title="Pure White"></button>
                                 <button onclick="updateVoucherField('${v.id}', 'bgColor', '#f3e8ff')" class="w-5 h-5 rounded-full border border-gray-300 bg-purple-100 ${currentBg === '#f3e8ff' ? 'ring-2 ring-lavender-600' : ''}" title="Light Purple"></button>
                                 <button onclick="updateVoucherField('${v.id}', 'bgColor', '#fef9c3')" class="w-5 h-5 rounded-full border border-gray-300 bg-yellow-100 ${currentBg === '#fef9c3' ? 'ring-2 ring-lavender-600' : ''}" title="Soft Yellow"></button>
                                 <button onclick="updateVoucherField('${v.id}', 'bgColor', '#dbeafe')" class="w-5 h-5 rounded-full border border-gray-300 bg-blue-100 ${currentBg === '#dbeafe' ? 'ring-2 ring-lavender-600' : ''}" title="Light Blue"></button>
@@ -951,22 +937,22 @@
 
                     <div>
                         <label class="text-[10px] font-semibold text-gray-500 block">Description Text</label>
-                        <input type="text" value="${escapeHtml(v.description)}" oninput="updateVoucherField('${v.id}', 'description', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
+                        <input type="text" value="${escapeHtml(v.description)}" placeholder="e.g. 20% Off Promotion" oninput="updateVoucherField('${v.id}', 'description', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
                     </div>
 
                     <div>
                         <label class="text-[10px] font-semibold text-gray-500 block">Validity Date Range</label>
-                        <input type="text" value="${escapeHtml(v.validityText)}" oninput="updateVoucherField('${v.id}', 'validityText', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
+                        <input type="text" value="${escapeHtml(v.validityText)}" placeholder="e.g. 01/01/2026 - 31/12/2026" oninput="updateVoucherField('${v.id}', 'validityText', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="text-[10px] font-semibold text-gray-500 block">Instruction Line</label>
-                            <input type="text" value="${escapeHtml(v.instructionText)}" oninput="updateVoucherField('${v.id}', 'instructionText', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
+                            <input type="text" value="${escapeHtml(v.instructionText)}" placeholder="e.g. If barcode fails, enter:" oninput="updateVoucherField('${v.id}', 'instructionText', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
                         </div>
                         <div>
                             <label class="text-[10px] font-semibold text-gray-500 block">Code / Serial Value</label>
-                            <input type="text" value="${escapeHtml(v.codeValue)}" oninput="updateVoucherField('${v.id}', 'codeValue', this.value)" class="w-full px-2 py-1 text-xs border rounded font-mono font-bold focus:ring-1 focus:ring-lavender-500">
+                            <input type="text" value="${escapeHtml(v.codeValue)}" placeholder="e.g. 200055064849005" oninput="updateVoucherField('${v.id}', 'codeValue', this.value)" class="w-full px-2 py-1 text-xs border rounded font-mono font-bold focus:ring-1 focus:ring-lavender-500">
                         </div>
                     </div>
 
@@ -1117,32 +1103,40 @@
                 const isQR = effectiveFormat === 'QR';
                 const bgColor = v.bgColor || '#ffffff';
 
+                // Ensure empty strings maintain card vertical line height
+                const descText = escapeHtml(v.description) || '&nbsp;';
+                const valText = escapeHtml(v.validityText) || '&nbsp;';
+                const insText = escapeHtml(v.instructionText) || '&nbsp;';
+                const codeText = escapeHtml(v.codeValue) || '&nbsp;';
+
                 return `
-                    <div class="voucher-box text-center shadow-xs" style="
+                    <div class="voucher-box text-center shadow-xs min-h-[90px] flex flex-col justify-between" style="
                         background-color: ${bgColor};
                         border-color: ${state.style.borderColor};
                         border-width: ${state.style.borderWidth}px;
                         padding: ${boxPad}px;
                         border-radius: 4px;
                     ">
-                        <!-- Description -->
-                        <div class="font-bold text-gray-900 leading-tight mb-0.5 ${titleFontClass}">
-                            <span>${escapeHtml(v.description)}</span>
-                        </div>
+                        <div>
+                            <!-- Description -->
+                            <div class="font-bold text-gray-900 leading-tight mb-0.5 ${titleFontClass}">
+                                <span>${descText}</span>
+                            </div>
 
-                        <!-- Date Range -->
-                        <div class="text-gray-800 font-semibold leading-tight mb-0.5 ${dateFontClass}">
-                            ${escapeHtml(v.validityText)}
-                        </div>
+                            <!-- Date Range -->
+                            <div class="text-gray-800 font-semibold leading-tight mb-0.5 ${dateFontClass}">
+                                ${valText}
+                            </div>
 
-                        <!-- Instruction Text -->
-                        <div class="text-gray-600 leading-tight ${instructFontClass}">
-                            ${escapeHtml(v.instructionText)}
-                        </div>
+                            <!-- Instruction Text -->
+                            <div class="text-gray-600 leading-tight ${instructFontClass}">
+                                ${insText}
+                            </div>
 
-                        <!-- Code String -->
-                        <div class="font-mono font-extrabold text-gray-900 tracking-wider my-0.5 ${codeFontClass}">
-                            ${escapeHtml(v.codeValue)}
+                            <!-- Code String -->
+                            <div class="font-mono font-extrabold text-gray-900 tracking-wider my-0.5 ${codeFontClass}">
+                                ${codeText}
+                            </div>
                         </div>
 
                         <!-- Barcode Image Target -->
@@ -1173,7 +1167,8 @@
 
                 const voucher = list.find(v => v.id === voucherId) || list[0];
 
-                if (voucher && voucher.codeValue) {
+                svgEl.innerHTML = ''; // clear previous render
+                if (voucher && voucher.codeValue && voucher.codeValue.trim() !== '') {
                     const format = (voucher.formatOverride && voucher.formatOverride !== 'DEFAULT')
                         ? voucher.formatOverride
                         : state.globalBarcodeFormat;
@@ -1190,8 +1185,11 @@
                         });
                     } catch (err) {
                         console.warn("Linear Barcode rendering error:", err);
-                        svgEl.innerHTML = `<text x="2" y="15" fill="red" font-size="8">Format Error</text>`;
+                        svgEl.innerHTML = `<text x="2" y="15" fill="#ef4444" font-size="8">Format Error</text>`;
                     }
+                } else {
+                    // Show subtle blank outline placeholder when code is empty
+                    svgEl.innerHTML = `<rect width="100%" height="${customHeight}" fill="none" stroke="#d1d5db" stroke-dasharray="3,3" rx="2"/>`;
                 }
             });
 
@@ -1210,8 +1208,8 @@
 
                 const voucher = list.find(v => v.id === voucherId) || list[0];
 
-                if (voucher && voucher.codeValue) {
-                    qrDiv.innerHTML = '';
+                qrDiv.innerHTML = '';
+                if (voucher && voucher.codeValue && voucher.codeValue.trim() !== '') {
                     try {
                         new QRCode(qrDiv, {
                             text: voucher.codeValue,
@@ -1225,6 +1223,9 @@
                         console.warn("QR Code rendering error:", err);
                         qrDiv.innerHTML = `<span class="text-red-500 text-[8px]">QR Error</span>`;
                     }
+                } else {
+                    // Show subtle blank box placeholder when QR value is empty
+                    qrDiv.innerHTML = `<div style="width:${customSize}px; height:${customSize}px;" class="border border-dashed border-gray-300 rounded flex items-center justify-center text-[8px] text-gray-400">Blank QR</div>`;
                 }
             });
         }
