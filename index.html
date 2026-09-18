@@ -60,6 +60,8 @@
             position: relative;
             margin: 0 auto;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            page-break-after: always;
+            break-after: page;
         }
 
         /* A5 Section Height for Split Mode */
@@ -71,7 +73,7 @@
             overflow: hidden;
         }
 
-        /* Voucher Box Styling matching user screenshot layout */
+        /* Voucher Box Styling matching user layout */
         .voucher-box {
             border-style: solid;
             transition: all 0.15s ease;
@@ -81,7 +83,7 @@
             print-color-adjust: exact !important;
         }
 
-        /* Print Specific Styles for High Quality Physical Output */
+        /* Print Specific Styles for Multi-Sheet Physical Output */
         @media print {
             @page {
                 size: A4 portrait;
@@ -91,19 +93,33 @@
                 background: white !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                width: 210mm;
-                height: 297mm;
+                width: 210mm !important;
+                height: auto !important;
             }
             .no-print {
                 display: none !important;
+            }
+            #zoom-viewport {
+                max-height: none !important;
+                overflow: visible !important;
+                padding: 0 !important;
+            }
+            #a4-page-canvas {
+                transform: none !important;
             }
             .a4-page {
                 box-shadow: none !important;
                 margin: 0 !important;
                 width: 210mm !important;
                 height: 297mm !important;
-                page-break-after: avoid;
-                page-break-inside: avoid;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+            .a4-page:last-child {
+                page-break-after: auto !important;
+                break-after: auto !important;
             }
             .print-cut-line {
                 border-top-style: dashed !important;
@@ -142,7 +158,7 @@
                 </div>
                 <div>
                     <h1 class="text-base sm:text-lg font-bold text-gray-900 leading-tight">Barcode Voucher Sheet Creator</h1>
-                    <p class="text-xs text-lavender-600 font-medium">Split A5 or Full A4 Printable Sheets</p>
+                    <p class="text-xs text-lavender-600 font-medium">Split A5 or Full A4 Printable Sheets (Multi-Page Auto Overflow)</p>
                 </div>
             </div>
 
@@ -159,7 +175,7 @@
                 </button>
                 <button onclick="window.print()" class="px-4 py-1.5 text-xs sm:text-sm font-semibold text-white bg-lavender-600 hover:bg-lavender-700 rounded-lg shadow flex items-center gap-2 transition-all transform active:scale-95">
                     <i data-lucide="printer" class="w-4 h-4"></i>
-                    <span>Print Sheet</span>
+                    <span>Print Sheet(s)</span>
                 </button>
             </div>
         </div>
@@ -200,7 +216,7 @@
                             <input type="checkbox" id="sync-sections-checkbox" onchange="toggleSyncSections(this.checked)" checked class="w-4 h-4 text-lavender-600 rounded border-gray-300 focus:ring-lavender-500">
                             <span>Mirror Top A5 to Bottom A5</span>
                         </label>
-                        <p class="text-xs text-gray-500">When checked, bottom A5 automatically duplicates top A5 vouchers.</p>
+                        <p class="text-xs text-gray-500">When checked, bottom A5 automatically duplicates top A5 vouchers across all overflow sheets.</p>
                     </div>
 
                     <!-- Target Section Switcher (If Split A4 and not synced) -->
@@ -261,7 +277,7 @@
 
                     <hr class="border-gray-100">
 
-                    <!-- 2. Column Grid Selection (1, 2, 3, or 4 Columns) -->
+                    <!-- 2. Column Grid Selection -->
                     <div class="space-y-3">
                         <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">2. Column Grid Layout</label>
                         <div class="grid grid-cols-4 gap-2">
@@ -308,9 +324,9 @@
 
                     <hr class="border-gray-100">
 
-                    <!-- 4. Spacing & Box Height Adjustments -->
+                    <!-- 4. Spacing, Page Overflow & Height Adjustments -->
                     <div class="space-y-3">
-                        <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">4. Box Height & Grid Spacing</label>
+                        <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">4. Box Height, Spacing & Overflow</label>
                         
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -332,13 +348,27 @@
                                 <input type="number" id="section-padding-input" min="2" max="25" value="6" oninput="updateLayoutConfig()" class="w-full px-2.5 py-1.5 text-xs border rounded-lg mt-1">
                             </div>
                             <div>
-                                <label class="text-xs text-gray-600 font-medium block">Quick Height Presets</label>
-                                <div class="flex gap-1 mt-1">
-                                    <button onclick="setQuickHeight(0)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">Auto</button>
-                                    <button onclick="setQuickHeight(28)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">28mm</button>
-                                    <button onclick="setQuickHeight(35)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">35mm</button>
-                                    <button onclick="setQuickHeight(45)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">45mm</button>
-                                </div>
+                                <label class="text-xs text-gray-600 font-medium block">Max Vouchers / Section Page</label>
+                                <select id="max-items-input" onchange="updateMaxItemsConfig(this.value)" class="w-full px-2 py-1.5 text-xs border rounded-lg mt-1 font-medium bg-white">
+                                    <option value="0">Auto (Calculate by Height)</option>
+                                    <option value="2">Max 2 Vouchers</option>
+                                    <option value="4">Max 4 Vouchers</option>
+                                    <option value="6">Max 6 Vouchers</option>
+                                    <option value="8">Max 8 Vouchers</option>
+                                    <option value="10">Max 10 Vouchers</option>
+                                    <option value="12">Max 12 Vouchers</option>
+                                    <option value="16">Max 16 Vouchers</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="pt-1">
+                            <label class="text-xs text-gray-600 font-medium block">Quick Height Presets</label>
+                            <div class="flex gap-1 mt-1">
+                                <button onclick="setQuickHeight(0)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">Auto</button>
+                                <button onclick="setQuickHeight(28)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">28mm</button>
+                                <button onclick="setQuickHeight(35)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">35mm</button>
+                                <button onclick="setQuickHeight(45)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">45mm</button>
                             </div>
                         </div>
                     </div>
@@ -425,7 +455,7 @@
 
             <!-- Panel Footer Status -->
             <div class="p-3 bg-gray-50 border-t border-lavender-100 text-xs text-gray-500 flex items-center justify-between">
-                <span>Page: <strong id="status-page-format" class="text-gray-700">2 x A5 (Split)</strong></span>
+                <span>Page: <strong id="status-page-format" class="text-gray-700">2 x A5 Split (1 Page)</strong></span>
                 <span id="voucher-count-badge" class="px-2 py-0.5 bg-lavender-100 text-lavender-800 font-semibold rounded-full">2 Vouchers</span>
             </div>
         </section>
@@ -456,66 +486,9 @@
             <!-- Viewport Container -->
             <div id="zoom-viewport" class="w-full overflow-auto flex justify-center py-2 px-2 max-h-[calc(100vh-10rem)]">
                 
-                <!-- Physical A4 Canvas Element (210mm x 297mm) -->
-                <div id="a4-page-canvas" class="a4-page transition-transform origin-top flex flex-col">
-                    
-                    <!-- SPLIT A5 MODE CONTAINERS -->
-                    <div id="split-a5-wrapper" class="w-full h-full flex flex-col">
-                        
-                        <!-- TOP A5 SECTION -->
-                        <div id="a5-top" class="a5-section flex flex-col">
-                            <div id="header-top-a5" class="flex items-center justify-between px-6 pt-4 pb-1">
-                                <div class="flex items-center gap-3">
-                                    <img id="logo-img-top" src="" alt="Company Logo" class="hidden object-contain max-h-[16mm]">
-                                    <span id="header-text-top" class="text-xs font-bold text-gray-800 uppercase tracking-wide hidden"></span>
-                                </div>
-                                <span class="text-[9px] text-gray-400 font-mono">A5 - TOP SECTION</span>
-                            </div>
-
-                            <div id="vouchers-container-top" class="flex-1 px-6 pb-3">
-                                <!-- Dynamic Vouchers Rendered Here -->
-                            </div>
-                        </div>
-
-                        <!-- CUT LINE INDICATOR -->
-                        <div id="cut-line-separator" class="print-cut-line w-full border-t-2 border-dashed border-lavender-300 relative flex items-center justify-center my-0">
-                            <span class="no-print absolute bg-lavender-100 text-lavender-700 text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-lavender-300 transform -translate-y-1/2 flex items-center gap-1 shadow-sm">
-                                <i data-lucide="scissors" class="w-3 h-3"></i> CUT LINE (MIDPOINT)
-                            </span>
-                        </div>
-
-                        <!-- BOTTOM A5 SECTION -->
-                        <div id="a5-bottom" class="a5-section flex flex-col">
-                            <div id="header-bottom-a5" class="flex items-center justify-between px-6 pt-4 pb-1">
-                                <div class="flex items-center gap-3">
-                                    <img id="logo-img-bottom" src="" alt="Company Logo" class="hidden object-contain max-h-[16mm]">
-                                    <span id="header-text-bottom" class="text-xs font-bold text-gray-800 uppercase tracking-wide hidden"></span>
-                                </div>
-                                <span class="text-[9px] text-gray-400 font-mono">A5 - BOTTOM SECTION</span>
-                            </div>
-
-                            <div id="vouchers-container-bottom" class="flex-1 px-6 pb-3">
-                                <!-- Dynamic Vouchers Rendered Here -->
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <!-- FULL A4 MODE CONTAINER -->
-                    <div id="full-a4-wrapper" class="w-full h-full flex flex-col hidden">
-                        <div id="header-full-a4" class="flex items-center justify-between px-8 pt-5 pb-2">
-                            <div class="flex items-center gap-4">
-                                <img id="logo-img-full" src="" alt="Company Logo" class="hidden object-contain max-h-[20mm]">
-                                <span id="header-text-full" class="text-sm font-bold text-gray-800 uppercase tracking-wide hidden"></span>
-                            </div>
-                            <span class="text-[9px] text-gray-400 font-mono">FULL A4 SHEET</span>
-                        </div>
-
-                        <div id="vouchers-container-full" class="flex-1 px-8 pb-5">
-                            <!-- Dynamic Vouchers Rendered Here -->
-                        </div>
-                    </div>
-
+                <!-- Physical Dynamic Canvas (Scale applied to container holding multiple A4 Pages) -->
+                <div id="a4-page-canvas" class="flex flex-col items-center transition-transform origin-top">
+                    <!-- Dynamic Printable .a4-page sheets rendered here -->
                 </div>
 
             </div>
@@ -572,7 +545,8 @@
                 headerText: '',
                 boxGap: 4, // mm
                 sectionPadding: 6, // mm
-                boxHeight: 32 // mm (0 = Auto fit content)
+                boxHeight: 32, // mm (0 = Auto fit content)
+                maxItemsPerPage: 0 // 0 = Auto calculated
             },
             style: {
                 borderColor: '#5b21b6', // Deep purple border
@@ -690,38 +664,24 @@
             
             const btnSplit = document.getElementById('layout-type-split');
             const btnFull = document.getElementById('layout-type-full');
-            const splitWrapper = document.getElementById('split-a5-wrapper');
-            const fullWrapper = document.getElementById('full-a4-wrapper');
             const syncWrapper = document.getElementById('sync-options-wrapper');
             const sectionTargetWrapper = document.getElementById('section-target-wrapper');
-            const statusFormat = document.getElementById('status-page-format');
-            const previewTag = document.getElementById('preview-mode-tag');
             const cutLineOptionWrapper = document.getElementById('cut-line-option-wrapper');
 
             if (type === 'split') {
                 btnSplit.className = "p-3 border-2 rounded-xl flex flex-col items-center text-center gap-1.5 border-lavender-600 bg-lavender-50 text-lavender-700";
                 btnFull.className = "p-3 border-2 rounded-xl flex flex-col items-center text-center gap-1.5 border-gray-200 text-gray-600 hover:border-gray-300";
                 
-                splitWrapper.classList.remove('hidden');
-                fullWrapper.classList.add('hidden');
                 syncWrapper.classList.remove('hidden');
                 if (!state.synced) sectionTargetWrapper.classList.remove('hidden');
                 cutLineOptionWrapper.classList.remove('hidden');
-
-                statusFormat.innerText = "2 x A5 (Split A4)";
-                previewTag.innerText = "2 x A5 Split";
             } else {
                 btnFull.className = "p-3 border-2 rounded-xl flex flex-col items-center text-center gap-1.5 border-lavender-600 bg-lavender-50 text-lavender-700";
                 btnSplit.className = "p-3 border-2 rounded-xl flex flex-col items-center text-center gap-1.5 border-gray-200 text-gray-600 hover:border-gray-300";
                 
-                fullWrapper.classList.remove('hidden');
-                splitWrapper.classList.add('hidden');
                 syncWrapper.classList.add('hidden');
                 sectionTargetWrapper.classList.add('hidden');
                 cutLineOptionWrapper.classList.add('hidden');
-
-                statusFormat.innerText = "1 x Full A4 Sheet";
-                previewTag.innerText = "Full A4 Sheet";
             }
 
             renderAll();
@@ -801,7 +761,6 @@
                 const trimmed = line.trim();
                 if (!trimmed) return;
 
-                // Check if line represents a sub-box heading container e.g. [Heading] or # Heading
                 if (trimmed.startsWith('[') || trimmed.startsWith('#') || trimmed.startsWith('---')) {
                     const cleanHeading = trimmed.replace(/^(\[|#|---|HEADING:\s*|\s*\])/g, '').replace(/\]$/, '').trim();
                     newItems.push({
@@ -867,7 +826,7 @@
                 voucher[field] = value;
                 if (field === 'bgColor' || field === 'textColor') {
                     renderPreview();
-                    renderVoucherForms(); // Keep color swatches updated
+                    renderVoucherForms();
                 } else {
                     renderPreview();
                 }
@@ -962,6 +921,11 @@
             renderPreview();
         }
 
+        function updateMaxItemsConfig(val) {
+            state.layout.maxItemsPerPage = parseInt(val) || 0;
+            renderPreview();
+        }
+
         function updateStyleConfig() {
             state.style.borderColor = document.getElementById('box-border-color').value;
             state.style.borderWidth = parseInt(document.getElementById('box-border-width').value) || 2;
@@ -997,7 +961,6 @@
 
             container.innerHTML = list.map((item, index) => {
                 if (item.type === 'heading') {
-                    // RENDER FORM FOR SUB-BOX HEADING
                     return `
                     <div class="border-2 border-lavender-300 rounded-xl p-3 bg-lavender-50/70 shadow-xs space-y-2.5 relative">
                         <div class="flex items-center justify-between border-b border-lavender-200 pb-2">
@@ -1040,7 +1003,6 @@
                     `;
                 }
 
-                // RENDER FORM FOR VOUCHER CARD
                 const currentBg = item.bgColor || '#ffffff';
                 return `
                 <div class="border border-lavender-200 rounded-xl p-3 bg-white shadow-sm space-y-2.5 relative">
@@ -1058,7 +1020,6 @@
                         </div>
                     </div>
 
-                    <!-- Individual Box Background Color Picker -->
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <label class="text-[10px] font-semibold text-gray-600">Box Background Color</label>
@@ -1069,7 +1030,6 @@
                         <div class="flex items-center gap-2">
                             <input type="color" value="${currentBg}" onchange="updateVoucherField('${item.id}', 'bgColor', this.value)" class="w-7 h-7 rounded border border-gray-300 shrink-0 cursor-pointer p-0.5 bg-white">
                             
-                            <!-- Quick Color Preset Swatches -->
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <button onclick="updateVoucherField('${item.id}', 'bgColor', '#ffffff')" class="w-5 h-5 rounded-full border border-gray-300 bg-white ${currentBg === '#ffffff' ? 'ring-2 ring-lavender-600' : ''}" title="Pure White"></button>
                                 <button onclick="updateVoucherField('${item.id}', 'bgColor', '#f3e8ff')" class="w-5 h-5 rounded-full border border-gray-300 bg-purple-100 ${currentBg === '#f3e8ff' ? 'ring-2 ring-lavender-600' : ''}" title="Light Purple"></button>
@@ -1126,80 +1086,194 @@
             return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
-        function renderPreview() {
-            // Cut Line visibility
-            const cutLine = document.getElementById('cut-line-separator');
-            if (state.layout.showCutLine) {
-                cutLine.classList.remove('hidden');
-            } else {
-                cutLine.classList.add('hidden');
+        // --- MULTI-PAGE OVERFLOW CHUNKING ENGINE ---
+        function getMaxCapacityUnits() {
+            if (state.layout.maxItemsPerPage > 0) {
+                return state.layout.maxItemsPerPage;
             }
+            const isFull = state.pageLayoutType === 'full';
+            const effectiveBoxHeight = state.layout.boxHeight > 0 ? state.layout.boxHeight : 32;
+            const usableHeight = (isFull ? 260 : 122) - (state.layout.sectionPadding * 2);
+            const rowHeight = effectiveBoxHeight + state.layout.boxGap;
+            const rows = Math.max(1, Math.floor((usableHeight + state.layout.boxGap) / rowHeight));
+            return rows * state.columns;
+        }
 
-            // Render Logos and Headers
-            ['top', 'bottom', 'full'].forEach(sec => {
-                const logoImg = document.getElementById(`logo-img-${sec}`);
-                const headerText = document.getElementById(`header-text-${sec}`);
+        function chunkItemsByCapacity(items, maxCapacity) {
+            if (!items || items.length === 0) return [[]];
+            const pages = [];
+            let currentPage = [];
+            let currentCapacity = 0;
 
-                if (logoImg) {
-                    if (state.layout.logoUrl) {
-                        logoImg.src = state.layout.logoUrl;
-                        logoImg.style.maxHeight = `${state.layout.logoHeight}mm`;
-                        logoImg.classList.remove('hidden');
-                    } else {
-                        logoImg.classList.add('hidden');
-                    }
+            items.forEach(item => {
+                const itemCost = (item.type === 'heading') ? state.columns : 1;
+                if (currentCapacity + itemCost > maxCapacity && currentPage.length > 0) {
+                    pages.push(currentPage);
+                    currentPage = [];
+                    currentCapacity = 0;
                 }
-
-                if (headerText) {
-                    if (state.layout.headerText) {
-                        headerText.innerText = state.layout.headerText;
-                        headerText.classList.remove('hidden');
-                    } else {
-                        headerText.classList.add('hidden');
-                    }
-                }
+                currentPage.push(item);
+                currentCapacity += itemCost;
             });
 
-            // Render Vouchers Containers based on Page Layout Type
-            if (state.pageLayoutType === 'split') {
-                const topList = state.vouchersTop;
-                const bottomList = state.synced ? state.vouchersTop : state.vouchersBottom;
+            if (currentPage.length > 0) {
+                pages.push(currentPage);
+            }
+            return pages;
+        }
 
-                renderVoucherContainer('vouchers-container-top', topList);
-                renderVoucherContainer('vouchers-container-bottom', bottomList);
+        function renderPreview() {
+            const canvas = document.getElementById('a4-page-canvas');
+            if (!canvas) return;
+
+            const maxCap = getMaxCapacityUnits();
+            let pageHtml = '';
+            let totalPages = 1;
+
+            if (state.pageLayoutType === 'split') {
+                const topChunks = chunkItemsByCapacity(state.vouchersTop, maxCap);
+                const bottomChunks = state.synced 
+                    ? topChunks 
+                    : chunkItemsByCapacity(state.vouchersBottom, maxCap);
+
+                totalPages = Math.max(topChunks.length, bottomChunks.length);
+
+                for (let p = 0; p < totalPages; p++) {
+                    const pageTopList = topChunks[p] || [];
+                    const pageBottomList = bottomChunks[p] || [];
+
+                    pageHtml += renderA4PageSplitHtml(p, totalPages, pageTopList, pageBottomList);
+                }
             } else {
-                renderVoucherContainer('vouchers-container-full', state.vouchersFull);
+                const fullChunks = chunkItemsByCapacity(state.vouchersFull, maxCap);
+                totalPages = fullChunks.length;
+
+                for (let p = 0; p < totalPages; p++) {
+                    pageHtml += renderA4PageFullHtml(p, totalPages, fullChunks[p] || []);
+                }
             }
 
+            canvas.innerHTML = pageHtml;
+
+            // Update Header & Footer Statuses
+            const previewTag = document.getElementById('preview-mode-tag');
+            const statusFormat = document.getElementById('status-page-format');
+            const pageText = totalPages > 1 ? `${totalPages} Pages` : '1 Page';
+
+            if (state.pageLayoutType === 'split') {
+                if (statusFormat) statusFormat.innerText = `2 x A5 Split (${pageText})`;
+                if (previewTag) previewTag.innerText = `2 x A5 Split (${pageText})`;
+            } else {
+                if (statusFormat) statusFormat.innerText = `Full A4 (${pageText})`;
+                if (previewTag) previewTag.innerText = `Full A4 (${pageText})`;
+            }
+
+            lucide.createIcons();
             setTimeout(generateBarcodes, 20);
         }
 
-        function renderVoucherContainer(containerId, voucherList) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
+        function renderA4PageSplitHtml(pageIndex, totalPages, topList, bottomList) {
+            const cutLineHidden = state.layout.showCutLine ? '' : 'hidden';
+            const pageLabel = totalPages > 1 ? ` - Page ${pageIndex + 1} of ${totalPages}` : '';
 
+            const topVouchersHtml = renderVoucherContainerHtml(`top_p${pageIndex}`, topList);
+            const bottomVouchersHtml = renderVoucherContainerHtml(`bottom_p${pageIndex}`, bottomList);
+
+            const logoHtml = state.layout.logoUrl 
+                ? `<img src="${state.layout.logoUrl}" alt="Logo" class="object-contain" style="max-height:${state.layout.logoHeight}mm">` 
+                : '';
+            const headerTextHtml = state.layout.headerText 
+                ? `<span class="text-xs font-bold text-gray-800 uppercase tracking-wide">${escapeHtml(state.layout.headerText)}</span>` 
+                : '';
+
+            return `
+            <div class="a4-page transition-transform origin-top flex flex-col relative mb-8 last:mb-0">
+                <div class="w-full h-full flex flex-col">
+                    <!-- TOP A5 SECTION -->
+                    <div class="a5-section flex flex-col">
+                        <div class="flex items-center justify-between px-6 pt-4 pb-1">
+                            <div class="flex items-center gap-3">
+                                ${logoHtml}
+                                ${headerTextHtml}
+                            </div>
+                            <span class="text-[9px] text-gray-400 font-mono">A5 - TOP SECTION${pageLabel}</span>
+                        </div>
+                        <div class="flex-1 px-6 pb-3 flex flex-col justify-start">
+                            ${topVouchersHtml}
+                        </div>
+                    </div>
+
+                    <!-- CUT LINE INDICATOR -->
+                    <div class="print-cut-line w-full border-t-2 border-dashed border-lavender-300 relative flex items-center justify-center my-0 ${cutLineHidden}">
+                        <span class="no-print absolute bg-lavender-100 text-lavender-700 text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-lavender-300 transform -translate-y-1/2 flex items-center gap-1 shadow-sm">
+                            <i data-lucide="scissors" class="w-3 h-3"></i> CUT LINE (MIDPOINT)
+                        </span>
+                    </div>
+
+                    <!-- BOTTOM A5 SECTION -->
+                    <div class="a5-section flex flex-col">
+                        <div class="flex items-center justify-between px-6 pt-4 pb-1">
+                            <div class="flex items-center gap-3">
+                                ${logoHtml}
+                                ${headerTextHtml}
+                            </div>
+                            <span class="text-[9px] text-gray-400 font-mono">A5 - BOTTOM SECTION${pageLabel}</span>
+                        </div>
+                        <div class="flex-1 px-6 pb-3 flex flex-col justify-start">
+                            ${bottomVouchersHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderA4PageFullHtml(pageIndex, totalPages, voucherList) {
+            const pageLabel = totalPages > 1 ? ` - Page ${pageIndex + 1} of ${totalPages}` : '';
+            const vouchersHtml = renderVoucherContainerHtml(`full_p${pageIndex}`, voucherList);
+
+            const logoHtml = state.layout.logoUrl 
+                ? `<img src="${state.layout.logoUrl}" alt="Logo" class="object-contain" style="max-height:${state.layout.logoHeight}mm">` 
+                : '';
+            const headerTextHtml = state.layout.headerText 
+                ? `<span class="text-sm font-bold text-gray-800 uppercase tracking-wide">${escapeHtml(state.layout.headerText)}</span>` 
+                : '';
+
+            return `
+            <div class="a4-page transition-transform origin-top flex flex-col relative mb-8 last:mb-0">
+                <div class="w-full h-full flex flex-col">
+                    <div class="flex items-center justify-between px-8 pt-5 pb-2">
+                        <div class="flex items-center gap-4">
+                            ${logoHtml}
+                            ${headerTextHtml}
+                        </div>
+                        <span class="text-[9px] text-gray-400 font-mono">FULL A4 SHEET${pageLabel}</span>
+                    </div>
+                    <div class="flex-1 px-8 pb-5 flex flex-col justify-start">
+                        ${vouchersHtml}
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderVoucherContainerHtml(containerId, voucherList) {
             const cols = state.columns;
+            const paddingMm = state.layout.sectionPadding;
+            const gapMm = state.layout.boxGap;
 
-            // Apply container margins & grid configuration
-            container.style.paddingLeft = `${state.layout.sectionPadding}mm`;
-            container.style.paddingRight = `${state.layout.sectionPadding}mm`;
-            container.style.gap = `${state.layout.boxGap}mm`;
-
-            // Dynamic grid column CSS
             const gridClassMap = {
                 1: 'grid grid-cols-1 align-start content-start',
                 2: 'grid grid-cols-2 align-start content-start',
                 3: 'grid grid-cols-3 align-start content-start',
                 4: 'grid grid-cols-4 align-start content-start'
             };
-            container.className = `flex-1 ${gridClassMap[cols] || 'grid grid-cols-2'}`;
+            const gridClass = gridClassMap[cols] || 'grid grid-cols-2';
 
-            if (voucherList.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-xs text-gray-300 italic text-center my-auto">Section Empty</div>`;
-                return;
+            if (!voucherList || voucherList.length === 0) {
+                return `<div class="w-full py-12 text-xs text-gray-300 italic text-center">Section Empty</div>`;
             }
 
-            // AUTO-SCALE DYNAMIC TYPOGRAPHY & BARCODE HEIGHTS BASED ON COLUMNS
             let titleFontClass = 'text-xs';
             let dateFontClass = 'text-[11px]';
             let instructFontClass = 'text-[9px]';
@@ -1240,13 +1314,11 @@
                 boxPad = Math.min(boxPad, 3);
             }
 
-            // Custom height style from layout state
             const customHeightCss = state.layout.boxHeight > 0 
                 ? `height: ${state.layout.boxHeight}mm;` 
                 : `min-height: 90px;`;
 
-            container.innerHTML = voucherList.map((item, i) => {
-                // RENDER SUB-BOX HEADING SPANNING FULL GRID WIDTH
+            const innerBoxesHtml = voucherList.map((item, i) => {
                 if (item.type === 'heading') {
                     const hTitle = escapeHtml(item.title) || 'SUB-BOX GROUP';
                     const hSub = escapeHtml(item.subtitle);
@@ -1263,7 +1335,6 @@
                     `;
                 }
 
-                // RENDER STANDARD VOUCHER BOX
                 const effectiveFormat = (item.formatOverride && item.formatOverride !== 'DEFAULT') 
                     ? item.formatOverride 
                     : state.globalBarcodeFormat;
@@ -1275,7 +1346,7 @@
                 const descText = escapeHtml(item.description) || '&nbsp;';
                 const valText = escapeHtml(item.validityText) || '&nbsp;';
                 const insText = escapeHtml(item.instructionText) || '&nbsp;';
-                const codeText = escapeHtml(item.codeValue) || '&nbsp;';
+                const codeText = escapeHtml(item.codeValue) || '';
 
                 return `
                     <div class="voucher-box text-center shadow-xs flex flex-col justify-between" style="
@@ -1287,63 +1358,49 @@
                         ${customHeightCss}
                     ">
                         <div class="flex-1 flex flex-col justify-center">
-                            <!-- Description -->
                             <div class="font-bold text-gray-900 leading-tight mb-0.5 ${titleFontClass}">
                                 <span>${descText}</span>
                             </div>
-
-                            <!-- Date Range -->
                             <div class="text-gray-800 font-semibold leading-tight mb-0.5 ${dateFontClass}">
                                 ${valText}
                             </div>
-
-                            <!-- Instruction Text -->
                             <div class="text-gray-600 leading-tight ${instructFontClass}">
                                 ${insText}
                             </div>
-
-                            <!-- Code String -->
                             <div class="font-mono font-extrabold text-gray-900 tracking-wider my-0.5 ${codeFontClass}">
-                                ${codeText}
+                                ${codeText || '&nbsp;'}
                             </div>
                         </div>
 
-                        <!-- Barcode Image Target -->
                         <div class="flex justify-center w-full overflow-hidden mt-0.5 shrink-0">
                             ${isQR 
-                                ? `<div id="${elementId}" class="flex items-center justify-center py-0.5" data-qr-size="${qrSize}"></div>`
-                                : `<svg id="${elementId}" class="max-w-full h-auto" data-bc-height="${bcHeight}"></svg>`
+                                ? `<div id="${elementId}" class="flex items-center justify-center py-0.5" data-qr-size="${qrSize}" data-code-value="${codeText}"></div>`
+                                : `<svg id="${elementId}" class="max-w-full h-auto" data-bc-height="${bcHeight}" data-code-value="${codeText}" data-format="${effectiveFormat}"></svg>`
                             }
                         </div>
                     </div>
                 `;
             }).join('');
+
+            return `
+                <div class="${gridClass}" style="padding-left:${paddingMm}mm; padding-right:${paddingMm}mm; gap:${gapMm}mm;">
+                    ${innerBoxesHtml}
+                </div>
+            `;
         }
 
         function generateBarcodes() {
             // Render 1D Linear Barcodes
             const allSvgs = document.querySelectorAll('.voucher-box svg[id^="bc_"]');
             allSvgs.forEach(svgEl => {
-                const parts = svgEl.id.split('_');
-                const voucherId = parts[3];
-                const containerId = parts[1] + '_' + parts[2];
+                const codeValue = svgEl.getAttribute('data-code-value');
+                const format = svgEl.getAttribute('data-format') || state.globalBarcodeFormat;
                 const customHeight = parseInt(svgEl.getAttribute('data-bc-height')) || 34;
-                
-                let list = state.vouchersFull;
-                if (state.pageLayoutType === 'split') {
-                    list = containerId.includes('top') ? state.vouchersTop : (state.synced ? state.vouchersTop : state.vouchersBottom);
-                }
 
-                const voucher = list.find(v => v.id === voucherId) || list[0];
-
-                svgEl.innerHTML = ''; // clear previous render
-                if (voucher && voucher.type !== 'heading' && voucher.codeValue && voucher.codeValue.trim() !== '') {
-                    const format = (voucher.formatOverride && voucher.formatOverride !== 'DEFAULT')
-                        ? voucher.formatOverride
-                        : state.globalBarcodeFormat;
-
+                svgEl.innerHTML = '';
+                if (codeValue && codeValue.trim() !== '') {
                     try {
-                        JsBarcode(`#${svgEl.id}`, voucher.codeValue, {
+                        JsBarcode(svgEl, codeValue, {
                             format: format === 'QR' ? 'CODE128' : format,
                             width: state.columns >= 3 ? 1.2 : 1.5,
                             height: customHeight,
@@ -1356,8 +1413,7 @@
                         console.warn("Linear Barcode rendering error:", err);
                         svgEl.innerHTML = `<text x="2" y="15" fill="#ef4444" font-size="8">Format Error</text>`;
                     }
-                } else if (voucher && voucher.type !== 'heading') {
-                    // Blank outline placeholder when code is empty
+                } else {
                     svgEl.innerHTML = `<rect width="100%" height="${customHeight}" fill="none" stroke="#d1d5db" stroke-dasharray="3,3" rx="2"/>`;
                 }
             });
@@ -1365,23 +1421,14 @@
             // Render 2D QR Codes
             const allQrDivs = document.querySelectorAll('.voucher-box div[id^="bc_"]');
             allQrDivs.forEach(qrDiv => {
-                const parts = qrDiv.id.split('_');
-                const voucherId = parts[3];
-                const containerId = parts[1] + '_' + parts[2];
+                const codeValue = qrDiv.getAttribute('data-code-value');
                 const customSize = parseInt(qrDiv.getAttribute('data-qr-size')) || 55;
-                
-                let list = state.vouchersFull;
-                if (state.pageLayoutType === 'split') {
-                    list = containerId.includes('top') ? state.vouchersTop : (state.synced ? state.vouchersTop : state.vouchersBottom);
-                }
-
-                const voucher = list.find(v => v.id === voucherId) || list[0];
 
                 qrDiv.innerHTML = '';
-                if (voucher && voucher.type !== 'heading' && voucher.codeValue && voucher.codeValue.trim() !== '') {
+                if (codeValue && codeValue.trim() !== '') {
                     try {
                         new QRCode(qrDiv, {
-                            text: voucher.codeValue,
+                            text: codeValue,
                             width: customSize,
                             height: customSize,
                             colorDark: "#000000",
@@ -1392,8 +1439,7 @@
                         console.warn("QR Code rendering error:", err);
                         qrDiv.innerHTML = `<span class="text-red-500 text-[8px]">QR Error</span>`;
                     }
-                } else if (voucher && voucher.type !== 'heading') {
-                    // Blank box placeholder when QR value is empty
+                } else {
                     qrDiv.innerHTML = `<div style="width:${customSize}px; height:${customSize}px;" class="border border-dashed border-gray-300 rounded flex items-center justify-center text-[8px] text-gray-400">Blank QR</div>`;
                 }
             });
@@ -1411,7 +1457,9 @@
 
         function applyZoom() {
             const canvas = document.getElementById('a4-page-canvas');
-            canvas.style.transform = `scale(${state.currentZoom})`;
+            if (canvas) {
+                canvas.style.transform = `scale(${state.currentZoom})`;
+            }
             document.getElementById('zoom-percentage').innerText = `${Math.round(state.currentZoom * 100)}%`;
         }
 
