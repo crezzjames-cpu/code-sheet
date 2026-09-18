@@ -209,20 +209,26 @@
                         <button onclick="setEditingSection('bottom')" id="edit-sec-bottom" class="flex-1 py-1.5 rounded-md text-gray-600">Bottom A5 Section</button>
                     </div>
 
-                    <!-- Vouchers Header & Add Button -->
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                            <i data-lucide="list-plus" class="w-4 h-4 text-lavender-600"></i>
-                            <span>Voucher Cards List</span>
-                        </h2>
-                        <div class="flex items-center gap-2">
-                            <button onclick="openBulkImportModal()" class="px-2.5 py-1.5 text-xs font-semibold text-lavender-700 bg-lavender-100 hover:bg-lavender-200 rounded-lg flex items-center gap-1 transition-colors">
+                    <!-- Vouchers Header & Add Buttons -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                                <i data-lucide="list-plus" class="w-4 h-4 text-lavender-600"></i>
+                                <span>Voucher Cards & Sub-Boxes</span>
+                            </h2>
+                            <button onclick="openBulkImportModal()" class="px-2.5 py-1 text-xs font-semibold text-lavender-700 bg-lavender-100 hover:bg-lavender-200 rounded-lg flex items-center gap-1 transition-colors">
                                 <i data-lucide="upload" class="w-3.5 h-3.5"></i>
                                 <span>Bulk</span>
                             </button>
-                            <button onclick="addNewVoucher()" class="px-3 py-1.5 text-xs font-semibold text-white bg-lavender-600 hover:bg-lavender-700 rounded-lg flex items-center gap-1 transition-colors shadow-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="addNewHeading()" class="px-3 py-1.5 text-xs font-semibold text-lavender-800 bg-lavender-100 hover:bg-lavender-200 border border-lavender-300 rounded-lg flex items-center justify-center gap-1 transition-colors shadow-xs">
+                                <i data-lucide="folder-plus" class="w-3.5 h-3.5"></i>
+                                <span>+ Add Sub-Box Heading</span>
+                            </button>
+                            <button onclick="addNewVoucher()" class="px-3 py-1.5 text-xs font-semibold text-white bg-lavender-600 hover:bg-lavender-700 rounded-lg flex items-center justify-center gap-1 transition-colors shadow-sm">
                                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                                <span>Add Voucher</span>
+                                <span>+ Add Voucher</span>
                             </button>
                         </div>
                     </div>
@@ -302,17 +308,37 @@
 
                     <hr class="border-gray-100">
 
-                    <!-- 4. Spacing Adjustments -->
+                    <!-- 4. Spacing & Box Height Adjustments -->
                     <div class="space-y-3">
-                        <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">4. Grid Spacing & Margins</label>
+                        <label class="text-xs font-bold text-gray-800 uppercase tracking-wider block">4. Box Height & Grid Spacing</label>
+                        
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="text-xs text-gray-600 font-medium block">Gap Between Boxes (mm)</label>
-                                <input type="number" id="box-gap-input" min="0" max="20" value="4" oninput="updateLayoutConfig()" class="w-full px-2.5 py-1.5 text-xs border rounded-lg">
+                                <label class="text-xs text-gray-600 font-medium block">Box Height (mm)</label>
+                                <div class="flex items-center gap-1.5 mt-1">
+                                    <input type="number" id="box-height-input" min="0" max="150" value="32" oninput="updateLayoutConfig()" class="w-full px-2.5 py-1.5 text-xs border rounded-lg focus:ring-1 focus:ring-lavender-500 font-bold">
+                                    <span class="text-[10px] text-gray-400 shrink-0">(0 = Auto)</span>
+                                </div>
                             </div>
                             <div>
+                                <label class="text-xs text-gray-600 font-medium block">Gap Between Boxes (mm)</label>
+                                <input type="number" id="box-gap-input" min="0" max="20" value="4" oninput="updateLayoutConfig()" class="w-full px-2.5 py-1.5 text-xs border rounded-lg mt-1">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div>
                                 <label class="text-xs text-gray-600 font-medium block">Edge Padding (mm)</label>
-                                <input type="number" id="section-padding-input" min="2" max="25" value="6" oninput="updateLayoutConfig()" class="w-full px-2.5 py-1.5 text-xs border rounded-lg">
+                                <input type="number" id="section-padding-input" min="2" max="25" value="6" oninput="updateLayoutConfig()" class="w-full px-2.5 py-1.5 text-xs border rounded-lg mt-1">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 font-medium block">Quick Height Presets</label>
+                                <div class="flex gap-1 mt-1">
+                                    <button onclick="setQuickHeight(0)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">Auto</button>
+                                    <button onclick="setQuickHeight(28)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">28mm</button>
+                                    <button onclick="setQuickHeight(35)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">35mm</button>
+                                    <button onclick="setQuickHeight(45)" class="flex-1 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded border">45mm</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -381,13 +407,13 @@
 
                         <div class="grid grid-cols-2 gap-3 pt-2">
                             <div>
-                                <label class="text-xs text-gray-600 font-medium block">Box Padding (px)</label>
+                                <label class="text-xs text-gray-600 font-medium block">Box Internal Padding (px)</label>
                                 <input type="number" id="box-padding-input" min="2" max="18" value="6" oninput="updateStyleConfig()" class="w-full px-2 py-1.5 text-xs border rounded-lg">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-600 font-medium block">Quick Batch Color</label>
                                 <button onclick="applyBgColorToAll('#ffffff')" class="w-full mt-0.5 px-2 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg border border-gray-300 transition-colors">
-                                    Reset All Backgrounds to White
+                                    Reset All Backgrounds
                                 </button>
                             </div>
                         </div>
@@ -512,10 +538,10 @@
             </div>
 
             <p class="text-xs text-gray-600">
-                Paste list of codes below (one per line). Optionally format as: <code class="bg-gray-100 px-1 py-0.5 rounded text-lavender-700 font-bold">Code, Description</code>
+                Paste list of codes below. Use <code class="bg-gray-100 px-1 py-0.5 rounded text-lavender-700 font-bold">[Sub-Box Title]</code> to insert heading sub-boxes, or standard format: <code class="bg-gray-100 px-1 py-0.5 rounded text-lavender-700 font-bold">Code, Description</code>
             </p>
 
-            <textarea id="bulk-text-input" rows="7" placeholder="200055064849005&#10;200055064849006, Special Promotional Discount&#10;200055064849007, Loyalty Reward Coupon" class="w-full px-3 py-2 text-xs border rounded-xl font-mono focus:ring-2 focus:ring-lavender-500"></textarea>
+            <textarea id="bulk-text-input" rows="7" placeholder="[SUMMER PROMOTION CODES]&#10;200055064849005, Special Promotional Discount&#10;200055064849006, Loyalty Reward Coupon&#10;&#10;[CLEARANCE DISCOUNTS]&#10;200055064849007, Clearance Extra 10% Off" class="w-full px-3 py-2 text-xs border rounded-xl font-mono focus:ring-2 focus:ring-lavender-500"></textarea>
 
             <div class="flex items-center justify-between pt-2">
                 <label class="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
@@ -545,7 +571,8 @@
                 logoHeight: 16, // mm
                 headerText: '',
                 boxGap: 4, // mm
-                sectionPadding: 6 // mm
+                sectionPadding: 6, // mm
+                boxHeight: 32 // mm (0 = Auto fit content)
             },
             style: {
                 borderColor: '#5b21b6', // Deep purple border
@@ -564,6 +591,7 @@
         function createBlankVoucher(idPrefix = 'v') {
             return {
                 id: idPrefix + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                type: 'voucher', // 'voucher' or 'heading'
                 bgColor: '#ffffff',
                 description: '',
                 validityText: '',
@@ -573,17 +601,55 @@
             };
         }
 
-        // Initialize blank templates
+        // Create blank heading sub-box
+        function createBlankHeading(idPrefix = 'h') {
+            return {
+                id: idPrefix + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                type: 'heading',
+                title: 'SUB-BOX GROUP HEADING',
+                subtitle: 'Scan codes below at checkout',
+                bgColor: '#efeafd',
+                textColor: '#5b21b6'
+            };
+        }
+
+        // Initialize sample templates with a heading sub-box
         function loadSampleData() {
             state.vouchersTop = [
+                {
+                    id: 'h1',
+                    type: 'heading',
+                    title: 'PROMOTIONAL DISCOUNT CODES',
+                    subtitle: 'Valid on qualifying store orders',
+                    bgColor: '#efeafd',
+                    textColor: '#5b21b6'
+                },
                 createBlankVoucher('v1'),
                 createBlankVoucher('v2')
             ];
+
             state.vouchersBottom = [
+                {
+                    id: 'h2',
+                    type: 'heading',
+                    title: 'PROMOTIONAL DISCOUNT CODES',
+                    subtitle: 'Valid on qualifying store orders',
+                    bgColor: '#efeafd',
+                    textColor: '#5b21b6'
+                },
                 createBlankVoucher('v3'),
                 createBlankVoucher('v4')
             ];
+
             state.vouchersFull = [ 
+                {
+                    id: 'hf1',
+                    type: 'heading',
+                    title: 'MAIN DEPARTMENT VOUCHERS',
+                    subtitle: 'Present barcode at point of sale',
+                    bgColor: '#efeafd',
+                    textColor: '#5b21b6'
+                },
                 createBlankVoucher('vf1'),
                 createBlankVoucher('vf2'),
                 createBlankVoucher('vf3'),
@@ -679,6 +745,12 @@
             renderAll();
         }
 
+        function addNewHeading() {
+            const list = getCurrentVoucherList();
+            list.push(createBlankHeading('h'));
+            renderAll();
+        }
+
         function removeVoucher(id) {
             if (state.pageLayoutType === 'full') {
                 state.vouchersFull = state.vouchersFull.filter(v => v.id !== id);
@@ -693,7 +765,8 @@
             const list = getCurrentVoucherList();
             const target = list.find(v => v.id === id);
             if (target) {
-                const clone = { ...target, id: 'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4) };
+                const clone = JSON.parse(JSON.stringify(target));
+                clone.id = (target.type === 'heading' ? 'h_' : 'v_') + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
                 list.push(clone);
                 renderAll();
             }
@@ -701,7 +774,9 @@
 
         function applyBgColorToAll(color) {
             const list = getCurrentVoucherList();
-            list.forEach(v => v.bgColor = color);
+            list.forEach(v => {
+                if (v.type !== 'heading') v.bgColor = color;
+            });
             renderAll();
         }
 
@@ -726,12 +801,27 @@
                 const trimmed = line.trim();
                 if (!trimmed) return;
 
+                // Check if line represents a sub-box heading container e.g. [Heading] or # Heading
+                if (trimmed.startsWith('[') || trimmed.startsWith('#') || trimmed.startsWith('---')) {
+                    const cleanHeading = trimmed.replace(/^(\[|#|---|HEADING:\s*|\s*\])/g, '').replace(/\]$/, '').trim();
+                    newItems.push({
+                        id: 'h_bulk_' + Date.now() + '_' + idx,
+                        type: 'heading',
+                        title: cleanHeading || 'GROUP HEADING',
+                        subtitle: 'Scan codes below',
+                        bgColor: '#efeafd',
+                        textColor: '#5b21b6'
+                    });
+                    return;
+                }
+
                 const parts = trimmed.split(',');
                 const code = parts[0] ? parts[0].trim() : '';
                 const desc = parts[1] ? parts[1].trim() : '';
 
                 newItems.push({
                     id: 'v_bulk_' + Date.now() + '_' + idx,
+                    type: 'voucher',
                     bgColor: '#ffffff',
                     description: desc,
                     validityText: '',
@@ -775,13 +865,18 @@
             const voucher = list.find(v => v.id === id);
             if (voucher) {
                 voucher[field] = value;
-                if (field === 'bgColor') {
+                if (field === 'bgColor' || field === 'textColor') {
                     renderPreview();
-                    renderVoucherForms(); // Keep color chips updated
+                    renderVoucherForms(); // Keep color swatches updated
                 } else {
                     renderPreview();
                 }
             }
+        }
+
+        function setQuickHeight(heightMm) {
+            document.getElementById('box-height-input').value = heightMm;
+            updateLayoutConfig();
         }
 
         function switchTab(tabName) {
@@ -862,6 +957,7 @@
             state.layout.headerText = document.getElementById('header-text-input').value;
             state.layout.boxGap = parseInt(document.getElementById('box-gap-input').value) || 4;
             state.layout.sectionPadding = parseInt(document.getElementById('section-padding-input').value) || 6;
+            state.layout.boxHeight = parseInt(document.getElementById('box-height-input').value) || 0;
 
             renderPreview();
         }
@@ -880,22 +976,72 @@
             const container = document.getElementById('voucher-items-container');
             const list = getCurrentVoucherList();
 
-            document.getElementById('voucher-count-badge').innerText = `${list.length} Voucher${list.length !== 1 ? 's' : ''}`;
+            document.getElementById('voucher-count-badge').innerText = `${list.length} Item${list.length !== 1 ? 's' : ''}`;
 
             if (list.length === 0) {
                 container.innerHTML = `
                     <div class="p-6 text-center border-2 border-dashed border-gray-200 rounded-xl">
-                        <p class="text-xs text-gray-500 mb-2">No vouchers in this section yet.</p>
-                        <button onclick="addNewVoucher()" class="px-3 py-1.5 text-xs font-semibold text-lavender-700 bg-lavender-100 hover:bg-lavender-200 rounded-lg">
-                            + Add First Voucher
-                        </button>
+                        <p class="text-xs text-gray-500 mb-2">No vouchers or headings in this section yet.</p>
+                        <div class="flex justify-center gap-2">
+                            <button onclick="addNewHeading()" class="px-2.5 py-1.5 text-xs font-semibold text-lavender-700 bg-lavender-100 hover:bg-lavender-200 rounded-lg">
+                                + Sub-Box Heading
+                            </button>
+                            <button onclick="addNewVoucher()" class="px-2.5 py-1.5 text-xs font-semibold text-white bg-lavender-600 hover:bg-lavender-700 rounded-lg">
+                                + Voucher Card
+                            </button>
+                        </div>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = list.map((v, index) => {
-                const currentBg = v.bgColor || '#ffffff';
+            container.innerHTML = list.map((item, index) => {
+                if (item.type === 'heading') {
+                    // RENDER FORM FOR SUB-BOX HEADING
+                    return `
+                    <div class="border-2 border-lavender-300 rounded-xl p-3 bg-lavender-50/70 shadow-xs space-y-2.5 relative">
+                        <div class="flex items-center justify-between border-b border-lavender-200 pb-2">
+                            <span class="text-xs font-extrabold text-lavender-900 flex items-center gap-1.5">
+                                <i data-lucide="folder" class="w-4 h-4 text-lavender-600"></i>
+                                Sub-Box Heading Container
+                            </span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="duplicateVoucher('${item.id}')" class="p-1 text-gray-500 hover:text-lavender-700 rounded" title="Duplicate Heading">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button onclick="removeVoucher('${item.id}')" class="p-1 text-gray-500 hover:text-red-600 rounded" title="Delete Heading">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-lavender-900 block">Sub-Box Group Title</label>
+                            <input type="text" value="${escapeHtml(item.title)}" placeholder="e.g. SPECIAL PROMOTIONS" oninput="updateVoucherField('${item.id}', 'title', this.value)" class="w-full px-2 py-1 text-xs border border-lavender-300 rounded font-bold uppercase focus:ring-1 focus:ring-lavender-500">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] font-semibold text-gray-600 block">Subtitle / Subtext</label>
+                                <input type="text" value="${escapeHtml(item.subtitle)}" placeholder="e.g. Scan codes below" oninput="updateVoucherField('${item.id}', 'subtitle', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-semibold text-gray-600 block">Background Color</label>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <input type="color" value="${item.bgColor || '#efeafd'}" onchange="updateVoucherField('${item.id}', 'bgColor', this.value)" class="w-6 h-6 rounded border cursor-pointer">
+                                    <button onclick="updateVoucherField('${item.id}', 'bgColor', '#efeafd')" class="w-4 h-4 rounded-full border bg-purple-100" title="Lavender"></button>
+                                    <button onclick="updateVoucherField('${item.id}', 'bgColor', '#3b82f6')" class="w-4 h-4 rounded-full border bg-blue-500" title="Blue"></button>
+                                    <button onclick="updateVoucherField('${item.id}', 'bgColor', '#10b981')" class="w-4 h-4 rounded-full border bg-emerald-500" title="Green"></button>
+                                    <button onclick="updateVoucherField('${item.id}', 'bgColor', '#111827')" class="w-4 h-4 rounded-full border bg-gray-900" title="Dark"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }
+
+                // RENDER FORM FOR VOUCHER CARD
+                const currentBg = item.bgColor || '#ffffff';
                 return `
                 <div class="border border-lavender-200 rounded-xl p-3 bg-white shadow-sm space-y-2.5 relative">
                     <div class="flex items-center justify-between border-b border-gray-100 pb-2">
@@ -903,10 +1049,10 @@
                             <i data-lucide="tag" class="w-3.5 h-3.5"></i> Voucher #${index + 1}
                         </span>
                         <div class="flex items-center gap-1">
-                            <button onclick="duplicateVoucher('${v.id}')" class="p-1 text-gray-400 hover:text-lavender-600 rounded" title="Duplicate">
+                            <button onclick="duplicateVoucher('${item.id}')" class="p-1 text-gray-400 hover:text-lavender-600 rounded" title="Duplicate">
                                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                             </button>
-                            <button onclick="removeVoucher('${v.id}')" class="p-1 text-gray-400 hover:text-red-600 rounded" title="Delete">
+                            <button onclick="removeVoucher('${item.id}')" class="p-1 text-gray-400 hover:text-red-600 rounded" title="Delete">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                             </button>
                         </div>
@@ -921,52 +1067,52 @@
                             </button>
                         </div>
                         <div class="flex items-center gap-2">
-                            <input type="color" value="${currentBg}" onchange="updateVoucherField('${v.id}', 'bgColor', this.value)" class="w-7 h-7 rounded border border-gray-300 shrink-0 cursor-pointer p-0.5 bg-white">
+                            <input type="color" value="${currentBg}" onchange="updateVoucherField('${item.id}', 'bgColor', this.value)" class="w-7 h-7 rounded border border-gray-300 shrink-0 cursor-pointer p-0.5 bg-white">
                             
                             <!-- Quick Color Preset Swatches -->
                             <div class="flex items-center gap-1.5 flex-wrap">
-                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#ffffff')" class="w-5 h-5 rounded-full border border-gray-300 bg-white ${currentBg === '#ffffff' ? 'ring-2 ring-lavender-600' : ''}" title="Pure White"></button>
-                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#f3e8ff')" class="w-5 h-5 rounded-full border border-gray-300 bg-purple-100 ${currentBg === '#f3e8ff' ? 'ring-2 ring-lavender-600' : ''}" title="Light Purple"></button>
-                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#fef9c3')" class="w-5 h-5 rounded-full border border-gray-300 bg-yellow-100 ${currentBg === '#fef9c3' ? 'ring-2 ring-lavender-600' : ''}" title="Soft Yellow"></button>
-                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#dbeafe')" class="w-5 h-5 rounded-full border border-gray-300 bg-blue-100 ${currentBg === '#dbeafe' ? 'ring-2 ring-lavender-600' : ''}" title="Light Blue"></button>
-                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#dcfce7')" class="w-5 h-5 rounded-full border border-gray-300 bg-green-100 ${currentBg === '#dcfce7' ? 'ring-2 ring-lavender-600' : ''}" title="Light Green"></button>
-                                <button onclick="updateVoucherField('${v.id}', 'bgColor', '#f3f4f6')" class="w-5 h-5 rounded-full border border-gray-300 bg-gray-100 ${currentBg === '#f3f4f6' ? 'ring-2 ring-lavender-600' : ''}" title="Light Grey"></button>
+                                <button onclick="updateVoucherField('${item.id}', 'bgColor', '#ffffff')" class="w-5 h-5 rounded-full border border-gray-300 bg-white ${currentBg === '#ffffff' ? 'ring-2 ring-lavender-600' : ''}" title="Pure White"></button>
+                                <button onclick="updateVoucherField('${item.id}', 'bgColor', '#f3e8ff')" class="w-5 h-5 rounded-full border border-gray-300 bg-purple-100 ${currentBg === '#f3e8ff' ? 'ring-2 ring-lavender-600' : ''}" title="Light Purple"></button>
+                                <button onclick="updateVoucherField('${item.id}', 'bgColor', '#fef9c3')" class="w-5 h-5 rounded-full border border-gray-300 bg-yellow-100 ${currentBg === '#fef9c3' ? 'ring-2 ring-lavender-600' : ''}" title="Soft Yellow"></button>
+                                <button onclick="updateVoucherField('${item.id}', 'bgColor', '#dbeafe')" class="w-5 h-5 rounded-full border border-gray-300 bg-blue-100 ${currentBg === '#dbeafe' ? 'ring-2 ring-lavender-600' : ''}" title="Light Blue"></button>
+                                <button onclick="updateVoucherField('${item.id}', 'bgColor', '#dcfce7')" class="w-5 h-5 rounded-full border border-gray-300 bg-green-100 ${currentBg === '#dcfce7' ? 'ring-2 ring-lavender-600' : ''}" title="Light Green"></button>
+                                <button onclick="updateVoucherField('${item.id}', 'bgColor', '#f3f4f6')" class="w-5 h-5 rounded-full border border-gray-300 bg-gray-100 ${currentBg === '#f3f4f6' ? 'ring-2 ring-lavender-600' : ''}" title="Light Grey"></button>
                             </div>
                         </div>
                     </div>
 
                     <div>
                         <label class="text-[10px] font-semibold text-gray-500 block">Description Text</label>
-                        <input type="text" value="${escapeHtml(v.description)}" placeholder="e.g. 20% Off Promotion" oninput="updateVoucherField('${v.id}', 'description', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
+                        <input type="text" value="${escapeHtml(item.description)}" placeholder="e.g. 20% Off Promotion" oninput="updateVoucherField('${item.id}', 'description', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
                     </div>
 
                     <div>
                         <label class="text-[10px] font-semibold text-gray-500 block">Validity Date Range</label>
-                        <input type="text" value="${escapeHtml(v.validityText)}" placeholder="e.g. 01/01/2026 - 31/12/2026" oninput="updateVoucherField('${v.id}', 'validityText', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
+                        <input type="text" value="${escapeHtml(item.validityText)}" placeholder="e.g. 01/01/2026 - 31/12/2026" oninput="updateVoucherField('${item.id}', 'validityText', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="text-[10px] font-semibold text-gray-500 block">Instruction Line</label>
-                            <input type="text" value="${escapeHtml(v.instructionText)}" placeholder="e.g. If barcode fails, enter:" oninput="updateVoucherField('${v.id}', 'instructionText', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
+                            <input type="text" value="${escapeHtml(item.instructionText)}" placeholder="e.g. If barcode fails, enter:" oninput="updateVoucherField('${item.id}', 'instructionText', this.value)" class="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-lavender-500">
                         </div>
                         <div>
                             <label class="text-[10px] font-semibold text-gray-500 block">Code / Serial Value</label>
-                            <input type="text" value="${escapeHtml(v.codeValue)}" placeholder="e.g. 200055064849005" oninput="updateVoucherField('${v.id}', 'codeValue', this.value)" class="w-full px-2 py-1 text-xs border rounded font-mono font-bold focus:ring-1 focus:ring-lavender-500">
+                            <input type="text" value="${escapeHtml(item.codeValue)}" placeholder="e.g. 200055064849005" oninput="updateVoucherField('${item.id}', 'codeValue', this.value)" class="w-full px-2 py-1 text-xs border rounded font-mono font-bold focus:ring-1 focus:ring-lavender-500">
                         </div>
                     </div>
 
                     <div>
                         <label class="text-[10px] font-semibold text-gray-500 block">Barcode Override</label>
-                        <select onchange="updateVoucherField('${v.id}', 'formatOverride', this.value)" class="w-full px-2 py-1 text-xs border rounded bg-white font-medium">
-                            <option value="DEFAULT" ${v.formatOverride === 'DEFAULT' ? 'selected' : ''}>Global Standard (${state.globalBarcodeFormat})</option>
-                            <option value="CODE128" ${v.formatOverride === 'CODE128' ? 'selected' : ''}>CODE128</option>
-                            <option value="CODE39" ${v.formatOverride === 'CODE39' ? 'selected' : ''}>CODE39</option>
-                            <option value="EAN13" ${v.formatOverride === 'EAN13' ? 'selected' : ''}>EAN-13</option>
-                            <option value="EAN8" ${v.formatOverride === 'EAN8' ? 'selected' : ''}>EAN-8</option>
-                            <option value="UPC" ${v.formatOverride === 'UPC' ? 'selected' : ''}>UPC-A</option>
-                            <option value="ITF14" ${v.formatOverride === 'ITF14' ? 'selected' : ''}>ITF-14</option>
-                            <option value="QR" ${v.formatOverride === 'QR' ? 'selected' : ''}>QR Code</option>
+                        <select onchange="updateVoucherField('${item.id}', 'formatOverride', this.value)" class="w-full px-2 py-1 text-xs border rounded bg-white font-medium">
+                            <option value="DEFAULT" ${item.formatOverride === 'DEFAULT' ? 'selected' : ''}>Global Standard (${state.globalBarcodeFormat})</option>
+                            <option value="CODE128" ${item.formatOverride === 'CODE128' ? 'selected' : ''}>CODE128</option>
+                            <option value="CODE39" ${item.formatOverride === 'CODE39' ? 'selected' : ''}>CODE39</option>
+                            <option value="EAN13" ${item.formatOverride === 'EAN13' ? 'selected' : ''}>EAN-13</option>
+                            <option value="EAN8" ${item.formatOverride === 'EAN8' ? 'selected' : ''}>EAN-8</option>
+                            <option value="UPC" ${item.formatOverride === 'UPC' ? 'selected' : ''}>UPC-A</option>
+                            <option value="ITF14" ${item.formatOverride === 'ITF14' ? 'selected' : ''}>ITF-14</option>
+                            <option value="QR" ${item.formatOverride === 'QR' ? 'selected' : ''}>QR Code</option>
                         </select>
                     </div>
                 </div>
@@ -1094,30 +1240,53 @@
                 boxPad = Math.min(boxPad, 3);
             }
 
-            container.innerHTML = voucherList.map((v, i) => {
-                const effectiveFormat = (v.formatOverride && v.formatOverride !== 'DEFAULT') 
-                    ? v.formatOverride 
+            // Custom height style from layout state
+            const customHeightCss = state.layout.boxHeight > 0 
+                ? `height: ${state.layout.boxHeight}mm;` 
+                : `min-height: 90px;`;
+
+            container.innerHTML = voucherList.map((item, i) => {
+                // RENDER SUB-BOX HEADING SPANNING FULL GRID WIDTH
+                if (item.type === 'heading') {
+                    const hTitle = escapeHtml(item.title) || 'SUB-BOX GROUP';
+                    const hSub = escapeHtml(item.subtitle);
+                    return `
+                        <div class="col-span-full voucher-box flex flex-col justify-center items-center py-1.5 px-3 rounded text-center shadow-xs my-0.5" style="
+                            background-color: ${item.bgColor || '#efeafd'};
+                            border-color: ${state.style.borderColor};
+                            border-width: ${state.style.borderWidth}px;
+                            color: ${item.textColor || '#5b21b6'};
+                        ">
+                            <div class="font-extrabold uppercase tracking-wider text-xs leading-tight">${hTitle}</div>
+                            ${hSub ? `<div class="text-[10px] font-medium opacity-90 leading-tight">${hSub}</div>` : ''}
+                        </div>
+                    `;
+                }
+
+                // RENDER STANDARD VOUCHER BOX
+                const effectiveFormat = (item.formatOverride && item.formatOverride !== 'DEFAULT') 
+                    ? item.formatOverride 
                     : state.globalBarcodeFormat;
 
-                const elementId = `bc_${containerId}_${v.id}_${i}`;
+                const elementId = `bc_${containerId}_${item.id}_${i}`;
                 const isQR = effectiveFormat === 'QR';
-                const bgColor = v.bgColor || '#ffffff';
+                const bgColor = item.bgColor || '#ffffff';
 
-                // Ensure empty strings maintain card vertical line height
-                const descText = escapeHtml(v.description) || '&nbsp;';
-                const valText = escapeHtml(v.validityText) || '&nbsp;';
-                const insText = escapeHtml(v.instructionText) || '&nbsp;';
-                const codeText = escapeHtml(v.codeValue) || '&nbsp;';
+                const descText = escapeHtml(item.description) || '&nbsp;';
+                const valText = escapeHtml(item.validityText) || '&nbsp;';
+                const insText = escapeHtml(item.instructionText) || '&nbsp;';
+                const codeText = escapeHtml(item.codeValue) || '&nbsp;';
 
                 return `
-                    <div class="voucher-box text-center shadow-xs min-h-[90px] flex flex-col justify-between" style="
+                    <div class="voucher-box text-center shadow-xs flex flex-col justify-between" style="
                         background-color: ${bgColor};
                         border-color: ${state.style.borderColor};
                         border-width: ${state.style.borderWidth}px;
                         padding: ${boxPad}px;
                         border-radius: 4px;
+                        ${customHeightCss}
                     ">
-                        <div>
+                        <div class="flex-1 flex flex-col justify-center">
                             <!-- Description -->
                             <div class="font-bold text-gray-900 leading-tight mb-0.5 ${titleFontClass}">
                                 <span>${descText}</span>
@@ -1140,7 +1309,7 @@
                         </div>
 
                         <!-- Barcode Image Target -->
-                        <div class="flex justify-center w-full overflow-hidden mt-0.5">
+                        <div class="flex justify-center w-full overflow-hidden mt-0.5 shrink-0">
                             ${isQR 
                                 ? `<div id="${elementId}" class="flex items-center justify-center py-0.5" data-qr-size="${qrSize}"></div>`
                                 : `<svg id="${elementId}" class="max-w-full h-auto" data-bc-height="${bcHeight}"></svg>`
@@ -1168,7 +1337,7 @@
                 const voucher = list.find(v => v.id === voucherId) || list[0];
 
                 svgEl.innerHTML = ''; // clear previous render
-                if (voucher && voucher.codeValue && voucher.codeValue.trim() !== '') {
+                if (voucher && voucher.type !== 'heading' && voucher.codeValue && voucher.codeValue.trim() !== '') {
                     const format = (voucher.formatOverride && voucher.formatOverride !== 'DEFAULT')
                         ? voucher.formatOverride
                         : state.globalBarcodeFormat;
@@ -1187,8 +1356,8 @@
                         console.warn("Linear Barcode rendering error:", err);
                         svgEl.innerHTML = `<text x="2" y="15" fill="#ef4444" font-size="8">Format Error</text>`;
                     }
-                } else {
-                    // Show subtle blank outline placeholder when code is empty
+                } else if (voucher && voucher.type !== 'heading') {
+                    // Blank outline placeholder when code is empty
                     svgEl.innerHTML = `<rect width="100%" height="${customHeight}" fill="none" stroke="#d1d5db" stroke-dasharray="3,3" rx="2"/>`;
                 }
             });
@@ -1209,7 +1378,7 @@
                 const voucher = list.find(v => v.id === voucherId) || list[0];
 
                 qrDiv.innerHTML = '';
-                if (voucher && voucher.codeValue && voucher.codeValue.trim() !== '') {
+                if (voucher && voucher.type !== 'heading' && voucher.codeValue && voucher.codeValue.trim() !== '') {
                     try {
                         new QRCode(qrDiv, {
                             text: voucher.codeValue,
@@ -1223,8 +1392,8 @@
                         console.warn("QR Code rendering error:", err);
                         qrDiv.innerHTML = `<span class="text-red-500 text-[8px]">QR Error</span>`;
                     }
-                } else {
-                    // Show subtle blank box placeholder when QR value is empty
+                } else if (voucher && voucher.type !== 'heading') {
+                    // Blank box placeholder when QR value is empty
                     qrDiv.innerHTML = `<div style="width:${customSize}px; height:${customSize}px;" class="border border-dashed border-gray-300 rounded flex items-center justify-center text-[8px] text-gray-400">Blank QR</div>`;
                 }
             });
